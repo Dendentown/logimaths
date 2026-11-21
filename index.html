@@ -133,7 +133,7 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
 #bravo{position:fixed;inset:0;background:rgba(5,10,25,.75);display:none;align-items:center;justify-content:center;z-index:100}
 #bravo .carte{background:var(--panel);border:3px solid var(--ok);border-radius:16px;padding:28px 34px;text-align:center;max-width:420px}
 #bravo h2{margin:0 0 8px;color:var(--ok);font-size:28px}
-/* ---------- téléphone en portrait (caché par l'écran « tourne ton téléphone ») ---------- */
+/* ---------- téléphone en portrait : blocs en haut, vérifications en bas ---------- */
 @media (max-width:760px) and (orientation:portrait){
   header{gap:6px 10px;padding:6px 10px}
   h1{font-size:19px}
@@ -190,13 +190,6 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
   #zoom .btn{width:34px;height:34px;font-size:18px}
   #bravo .carte{padding:16px 22px}
 }
-/* ---------- écran « tourne ton téléphone » ---------- */
-#tourner{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:18px}
-#tourner h2{margin:0;font-size:24px} #tourner h2 b{color:var(--accent)}
-#tourner p{margin:0;color:var(--muted);font-size:16px;line-height:1.4;max-width:300px}
-#tourner .tel{font-size:70px;animation:tourne 2.4s ease-in-out infinite}
-@keyframes tourne{0%,20%{transform:rotate(0)}50%,80%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
-@media (orientation:portrait) and (max-width:760px){ #tourner{display:flex} }
 </style>
 </head>
 <body>
@@ -241,12 +234,6 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
   <div id="msg">Construis ta machine, glisse une valeur dans la case jaune, puis lance la vérification.</div>
 </footer>
 
-<div id="tourner">
-  <h2>Logi<b>maths</b></h2>
-  <div class="tel">📱</div>
-  <p>Tourne ton téléphone en mode <b>paysage</b> pour jouer.</p>
-  <button class="btn main" id="btnPaysage">Passer en plein écran paysage</button>
-</div>
 <div id="ghost"></div>
 <div id="bravo"><div class="carte"><h2>Bravo ! 🎉</h2><p id="bravoTxt"></p><button class="btn main" id="btnFermer">Continuer</button></div></div>
 
@@ -1136,15 +1123,6 @@ async function testerTous(){
 
 /* ===================== Démarrage ===================== */
 $("#zMoins").onclick = () => zoomer(1 / 1.2);
-// plein écran + verrouillage en paysage (possible sur Android ; sur iPhone il faut tourner le téléphone)
-{
-  const bp = $("#btnPaysage"), el = document.documentElement;
-  if (!(el.requestFullscreen && screen.orientation && screen.orientation.lock)) bp.style.display = "none";
-  bp.onclick = async () => {
-    try { await el.requestFullscreen(); await screen.orientation.lock("landscape"); }
-    catch(e){ bp.textContent = "Tourne ton téléphone à la main 🙂"; }
-  };
-}
 $("#zPlus").onclick = () => zoomer(1.2);
 $("#consigne").onclick = () => $("#consigne").classList.toggle("ouvert");
 let tRedim = null;
