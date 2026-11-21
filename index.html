@@ -169,6 +169,8 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
    ===================================================================== */
 // écriture décimale française (virgule)
 const fr = x => String(x).replace(".", ",");
+// h² = a² + b² ? (avec une petite tolérance pour les décimaux)
+const egalite = (h, a, b) => Math.abs(h*h - a*a - b*b) < 1e-9;
 
 const ACTIVITES = [
   {
@@ -230,25 +232,28 @@ const ACTIVITES = [
     nombres: [[90, 30, 60], [40, 90, 50], [60, 60, 60], [90, 45, 45], [30, 60, 90], [100, 40, 40], [90, 20, 70], [50, 50, 80]]
   },
   {
-    id: "pythagore",
+    id: "pythagore-rc",
     titre: "Activité 4 — Réciproque et contraposée du théorème de Pythagore",
-    consigne: "ABC est un triangle dont le plus grand côté est [BC] (longueurs en cm). " +
-              "Construis une machine qui vérifie si le triangle ABC est rectangle en A. " +
-              "Glisse un triangle dans la case et lance la vérification.",
+    consigne: "On connaît les longueurs des côtés d'un triangle ABC (en cm). " +
+              "Construis une machine qui indique ce que la réciproque et la contraposée du théorème de Pythagore permettent de conclure.",
     entree: "Triangle ABC :",
     largeurDepart: 380, hauteurDepart: 132,
     // chaque valeur est un triangle [AB, AC, BC]
     affiche: t => figureCotes(t),
     nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
     conditions: [
-      { key: "egal", texte: "BC² = AB² + AC²", test: t => Math.abs(t[0]*t[0] + t[1]*t[1] - t[2]*t[2]) < 1e-9 }
+      { key: "egalA", texte: "BC² = AB² + AC²", test: t => egalite(t[2], t[0], t[1]) },
+      { key: "egalB", texte: "AC² = AB² + BC²", test: t => egalite(t[1], t[0], t[2]) },
+      { key: "egalC", texte: "AB² = AC² + BC²", test: t => egalite(t[0], t[1], t[2]) }
     ],
     sorties: [
-      { key: "rect", texte: "ABC est rectangle en A" },
-      { key: "nonrect", texte: "ABC n'est pas rectangle en A" }
+      { key: "rectA", texte: "ABC est rectangle en A" },
+      { key: "rectB", texte: "ABC est rectangle en B" },
+      { key: "rectC", texte: "ABC est rectangle en C" },
+      { key: "nonrect", texte: "ABC n'est pas rectangle" }
     ],
-    attendu: t => (Math.abs(t[0]*t[0] + t[1]*t[1] - t[2]*t[2]) < 1e-9 ? "rect" : "nonrect"),
-    nombres: [[3, 4, 5], [4, 5, 6], [6, 8, 10], [5, 6, 7.8], [5, 12, 13], [2, 3, 4], [4, 7.5, 8.5], [6, 7, 9]]
+    attendu: t => egalite(t[2], t[0], t[1]) ? "rectA" : egalite(t[1], t[0], t[2]) ? "rectB" : egalite(t[0], t[1], t[2]) ? "rectC" : "nonrect",
+    nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [6, 7, 9]]
   }
 ];
 const aff = v => act.affiche ? act.affiche(v) : String(v);
