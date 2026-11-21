@@ -17,7 +17,7 @@ On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lance
 ## Activité 3 — Théorème de Pythagore
 - On connaît les angles du triangle ABC. Entrée : `Â ; B̂ ; Ĉ = [   ]`
 - Conditions : « Le triangle ABC est rectangle en A », « Le triangle ABC est rectangle en B », « Le triangle ABC n'est pas rectangle en C »
-- Fin : « BC² = AB² + AC² », « On ne peut pas conclure avec le théorème de Pythagore »
+- Fin : « BC² = AB² + AC² », « AC² = AB² + BC² », « AB² = AC² + BC² », « On ne peut pas conclure avec le théorème de Pythagore »
 
 ## Activité 4 — Réciproque et contraposée du théorème de Pythagore
 - ABC est un triangle dont le plus grand côté est [BC]. Entrée : `AB ; AC ; BC = [   ]` (on glisse un triangle).
