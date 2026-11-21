@@ -14,7 +14,7 @@ Jeu de logique : l'élève construit une **machine de vérification** sous forme
 
 On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lancer la vérification** : les blocs traversés s'allument en **blanc**, et la sortie atteinte s'affiche en **vert** (bonne réponse) ou en **rouge** (mauvaise réponse).
 
-## Activité 3 — Pythagore et sa contraposée
+## Activité 3 — Réciproque et contraposée du théorème de Pythagore
 - ABC est un triangle dont le plus grand côté est [BC]. Entrée : `AB ; AC ; BC = [   ]` (on glisse un triangle).
 - Condition : « BC² = AB² + AC² »
 - Sorties : « ABC est rectangle en A », « ABC n'est pas rectangle en A »
