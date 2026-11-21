@@ -11,6 +11,7 @@
   --lit:#ffffff; --ok:#2ecc71; --ko:#ff4d4d; --accent:#ffc94d; --warn:#ff9f43;
 }
 *{box-sizing:border-box}
+.pal,.block,.num,.port,#palette{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 html,body{height:100%}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;overflow:hidden}
 header{display:flex;align-items:center;gap:16px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
@@ -34,7 +35,7 @@ main{flex:1;display:flex;min-height:0}
 .pal.pris:hover{border-color:var(--blockb)}
 .aide{font-size:12px;color:var(--muted);line-height:1.4;margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
 #zone{flex:1;overflow:auto;position:relative;min-width:0}
-#ws{position:relative;width:1100px;height:820px;background-image:radial-gradient(var(--grid) 1.6px,transparent 1.6px);background-size:24px 24px}
+#ws{position:relative;width:1100px;height:820px;min-width:100%;min-height:100%;background-image:radial-gradient(var(--grid) 1.6px,transparent 1.6px);background-size:24px 24px}
 svg#links{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1}
 svg#links path.vis{fill:none;stroke:#6f83bd;stroke-width:3}
 svg#links path.vis.lit{stroke:var(--lit);stroke-width:4;filter:drop-shadow(0 0 6px #fff)}
@@ -406,13 +407,16 @@ function dragPalette(e, type, key, texte){
     return;
   }
   const g = $("#ghost"); g.textContent = texte;
-  const x0 = e.clientX, y0 = e.clientY; let bouge = false;
+  const x0 = e.clientX, y0 = e.clientY; let bouge = false, dernier = { clientX: x0, clientY: y0 };
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch(_){}
   const move = ev => {
+    dernier = { clientX: ev.clientX, clientY: ev.clientY };
     if (!bouge && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 6) return;
     bouge = true; g.style.display = "block";
     g.style.left = (ev.clientX - 20) + "px"; g.style.top = (ev.clientY - 15) + "px";
   };
-  const up = ev => {
+  const up = evt => {
+    const ev = evt.type === "pointercancel" ? dernier : evt;
     window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up);
     g.style.display = "none";
     const d = DIM[type]; let x, y;
@@ -652,6 +656,8 @@ async function testerTous(){
 }
 
 /* ===================== Démarrage ===================== */
+document.addEventListener("dragstart", e => e.preventDefault());
+document.addEventListener("selectstart", e => { if (e.target.closest && e.target.closest("#palette,#ws,#nombres")) e.preventDefault(); });
 ACTIVITES.forEach((a, i) => { const o = document.createElement("option"); o.value = i; o.textContent = a.titre; $("#choixAct").appendChild(o); });
 $("#choixAct").onchange = e => { stopRun(); selPort = null; chargerActivite(+e.target.value); };
 $("#btnTous").onclick = testerTous;
