@@ -40,6 +40,9 @@ main{flex:1;display:flex;min-height:0}
 .pal.act::before{content:"⚙ ";color:#3fc1a5}
 .var{display:inline-block;margin-left:14px;padding:2px 8px;border-radius:6px;border:2px solid #3fc1a5;font-size:17px;color:#3fc1a5}
 .var.change{background:#3fc1a5;color:#06241d}
+.block.out.calcul{height:auto !important;min-height:68px}
+.block.out.calcul .face{position:relative;flex-direction:column;gap:3px;padding:8px 12px}
+.calc{font-size:15px;font-weight:800}
 .slot.change{background:#3fc1a5 !important;color:#06241d !important}
 .pal.out::before{content:"■ ";color:var(--accent)}
 .pal:hover{border-color:var(--accent)}
@@ -213,8 +216,57 @@ const ACTIVITES = [
     nombres: [20, 35, 47, 5, 130, 58, 2025, 101]
   },
   {
+    id: "pythagore-longueur",
+    titre: "Activité 3 — Calculer une longueur avec le théorème de Pythagore",
+    consigne: "Les côtés d'un triangle sont notés a, b et c. On connaît b et c. " +
+              "Construis une machine qui permet de retrouver la longueur du troisième côté a.",
+    entree: "Le triangle :",
+    largeurDepart: 420, hauteurDepart: 146,
+    // chaque valeur : longueurs b et c connues, hyp = côté hypoténuse ("a", "c") ou null si le triangle n'est pas rectangle
+    affiche: t => figureLongueur(t),
+    nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
+    etatInitial: t => ({ t }),
+    conditions: [
+      { key: "rect", texte: "Le triangle est rectangle", test: e => e.t.hyp != null },
+      { key: "ahyp", texte: "a est l'hypoténuse", test: e => e.t.hyp === "a" }
+    ],
+    // les actions écrivent les étapes du calcul ; la machine vérifie qu'elles sont faites dans le bon ordre
+    actions: [
+      { key: "eqA", texte: "c² + b² = a²", f: e => ({ ...e, eq: "a" }) },
+      { key: "eqC", texte: "a² + b² = c²", f: e => ({ ...e, eq: "c" }) },
+      { key: "isole", texte: "a² = c² − b²", f: e => ({ ...e, isole: e.eq === "c" }) }
+    ],
+    sorties: [
+      { key: "moins", texte: "a = √(c² − b²)" },
+      { key: "plus", texte: "a = √(c² + b²)" },
+      { key: "nc", texte: "On ne peut pas utiliser le théorème de Pythagore" }
+    ],
+    attendu: t => (t.hyp === "a" ? "plus" : t.hyp === "c" ? "moins" : "nc"),
+    // bonne fin, mais il faut aussi être passé par les bonnes égalités
+    valide: (t, e, fin) => {
+      const att = t.hyp === "a" ? "plus" : t.hyp === "c" ? "moins" : "nc";
+      if (fin !== att) return false;
+      if (fin === "plus" && e.eq !== "a") return "etape";
+      if (fin === "moins" && !(e.eq === "c" && e.isole)) return "etape";
+      return true;
+    },
+    // quand la machine arrive sur une Fin de calcul : égalité avec les valeurs, puis valeur de a
+    detailFin: (t, fin) => {
+      if (fin === "nc") return null;
+      const sq = fin === "plus" ? t.c*t.c + t.b*t.b : t.c*t.c - t.b*t.b;
+      const l1 = `a = √(${fr(t.c)}² ${fin === "plus" ? "+" : "−"} ${fr(t.b)}²)`;
+      if (sq < 0) return [l1, "impossible : " + fr(t.c) + "² − " + fr(t.b) + "² < 0"];
+      const a = Math.sqrt(sq);
+      return [l1, Number.isInteger(a) ? `a = ${a}` : `a ≈ ${fr(Math.round(a * 100) / 100)}`];
+    },
+    bilan: (t, e) => t.hyp === "a" ? `a = √(${t.c}² + ${t.b}²) = √${t.c*t.c + t.b*t.b} = ${fr(Math.sqrt(t.c*t.c + t.b*t.b))}.`
+                   : t.hyp === "c" ? `a = √(${t.c}² − ${t.b}²) = √${t.c*t.c - t.b*t.b} = ${fr(Math.sqrt(t.c*t.c - t.b*t.b))}.` : "",
+    nombres: [{ b: 3, c: 4, hyp: "a" }, { b: 6, c: 10, hyp: "c" }, { b: 5, c: 12, hyp: "a" }, { b: 4, c: 6, hyp: null, aDessin: 5 },
+              { b: 9, c: 15, hyp: "c" }, { b: 8, c: 6, hyp: "a" }, { b: 7, c: 25, hyp: "c" }, { b: 5, c: 7, hyp: null, aDessin: 6.2 }]
+  },
+  {
     id: "pythagore-direct",
-    titre: "Activité 3 — Théorème de Pythagore",
+    titre: "Activité 4 — Théorème de Pythagore",
     consigne: "On connaît les angles d'un triangle ABC. " +
               "Construis une machine qui indique ce que le théorème de Pythagore permet de conclure.",
     entree: "Triangle ABC :",
@@ -240,7 +292,7 @@ const ACTIVITES = [
   },
   {
     id: "pythagore-rc",
-    titre: "Activité 4 — Réciproque et contraposée du théorème de Pythagore",
+    titre: "Activité 5 — Réciproque et contraposée du théorème de Pythagore",
     consigne: "On connaît les longueurs des côtés d'un triangle ABC (en cm). " +
               "Construis une machine qui indique ce que la réciproque et la contraposée du théorème de Pythagore permettent de conclure.",
     entree: "Triangle ABC :",
@@ -264,7 +316,7 @@ const ACTIVITES = [
   },
   {
     id: "multiple7-i",
-    titre: "Activité 5 — Multiple de 7 (division euclidienne)",
+    titre: "Activité 6 — Multiple de 7 (division euclidienne)",
     consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 7, " +
               "en faisant la division euclidienne de n par 7.",
     largeurDepart: 290,
@@ -296,7 +348,7 @@ const aff = v => act.affiche ? act.affiche(v) : String(v);
 // orientation différente pour chaque figure, pour que l'élève ne se fie pas à la position
 const ROTATIONS = [0, 22, 165, -18, 190, 32, -28, 172];
 function dessinTriangle(P, opts){
-  const W = 150, H = 110, pad = 20, padHaut = 26;
+  const W = opts.W || 150, H = opts.H || 110, pad = opts.pad || 20, padHaut = Math.max(26, pad);
   const r = (opts.rot || 0) * Math.PI / 180, co = Math.cos(r), si = Math.sin(r);
   const q = {};
   for (const k of "ABC"){ const [x, y] = P[k]; q[k] = [x*co - y*si, x*si + y*co]; }
@@ -333,12 +385,12 @@ function dessinTriangle(P, opts){
     svg += `<line x1="${f(M[0]-n[0]*5)}" y1="${f(M[1]-n[1]*5)}" x2="${f(M[0]+n[0]*5)}" y2="${f(M[1]+n[1]*5)}" stroke="currentColor" stroke-width="1.8"/>`;
   });
   // longueurs écrites sur les côtés
-  (opts.longueurs || []).forEach(([k1, k2, txt]) => {
+  (opts.longueurs || []).forEach(([k1, k2, txt, couleur]) => {
     const M = [(S[k1][0] + S[k2][0]) / 2, (S[k1][1] + S[k2][1]) / 2], o = u(M, G);
-    svg += `<text x="${f(M[0]+o[0]*11)}" y="${f(M[1]+o[1]*11)}" font-size="10.5" font-weight="600" fill="currentColor" text-anchor="middle" dominant-baseline="central">${txt}</text>`;
+    svg += `<text x="${f(M[0]+o[0]*(opts.ecart || 11))}" y="${f(M[1]+o[1]*(opts.ecart || 11))}" font-size="${couleur ? 12 : 10.5}" font-weight="${couleur ? 800 : 600}" fill="${couleur || "currentColor"}" text-anchor="middle" dominant-baseline="central">${txt}</text>`;
   });
   // noms des sommets
-  for (const k of "ABC"){
+  if (!opts.sansSommets) for (const k of "ABC"){
     const o = u(S[k], G);
     svg += `<text x="${f(S[k][0]+o[0]*9)}" y="${f(S[k][1]+o[1]*9)}" font-size="11" font-weight="700" fill="currentColor" text-anchor="middle" dominant-baseline="central">${k}</text>`;
   }
@@ -362,6 +414,15 @@ function figureAngles(t){
   const uniq = [...new Map(traits.map(p => [p.join(""), p])).values()];
   const angles = ((act.anglesAffiches || {})[i] || []).map(k => [k, t["ABC".indexOf(k)] + "°"]);
   return dessinTriangle(P, { rot: ROTATIONS[i % 8], droit, traits: uniq, angles, numero: i + 1 });
+}
+// triangle dont les côtés sont nommés a, b, c ; a est inconnu (« a = ? »)
+function figureLongueur(t){
+  const i = act.nombres.indexOf(t);
+  const a = t.hyp === "a" ? Math.sqrt(t.b*t.b + t.c*t.c) : t.hyp === "c" ? Math.sqrt(t.c*t.c - t.b*t.b) : t.aDessin;
+  const P = sommets(a, t.b, t.c);
+  const droit = t.hyp === "a" ? "A" : t.hyp === "c" ? "C" : null;
+  return dessinTriangle(P, { rot: ROTATIONS[i % 8], numero: i + 1, droit, sansSommets: true, W: 150, H: 112, pad: 28, ecart: 13,
+    longueurs: [["B","C", "a=?", "#3d8bff"], ["A","C", "b=" + fr(t.b)], ["A","B", "c=" + fr(t.c)]] });
 }
 // activité 4 : triangle donné par ses longueurs [AB, AC, BC] → longueurs écrites sur la figure
 function figureCotes(t){
@@ -389,7 +450,7 @@ function etatInitial(){
 }
 function sauver(){
   // on n'enregistre pas les lumières du dernier test
-  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur"];
+  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra"];
   try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId }, (k, v) => tmp.includes(k) ? undefined : v)); } catch(e){}
 }
 function charger(){
@@ -463,7 +524,9 @@ function texteBloc(b){
   }
   if (b.type === "cond") return act.conditions.find(c => c.key === b.key)?.texte ?? "?";
   if (b.type === "act") return (act.actions || []).find(a => a.key === b.key)?.texte ?? "?";
-  return act.sorties.find(s => s.key === b.key)?.texte ?? "?";
+  const t = act.sorties.find(s => s.key === b.key)?.texte ?? "?";
+  // lignes de calcul ajoutées quand la machine arrive sur ce bloc de Fin
+  return b.extra ? `<div>${t}</div>` + b.extra.map(l => `<div class="calc">${l}</div>`).join("") : t;
 }
 function ports(b){
   const d = DIM[b.type];
@@ -791,13 +854,14 @@ function majEtats(){
     el.classList.toggle("ok", b.res === "ok");
     el.classList.toggle("ko", b.res === "ko");
     el.classList.toggle("stuck", !!b.stuck);
-    if (b.type === "start") el.querySelector(".face").innerHTML = texteBloc(b);
+    if (b.type === "start" || b.type === "out") el.querySelector(".face").innerHTML = texteBloc(b);
+    if (b.type === "out") el.classList.toggle("calcul", !!b.extra);
     el.querySelectorAll(".plabel").forEach(lb => lb.classList.toggle("lit", b.portLit === lb.dataset.port));
   });
   dessinerLiens();
 }
 function reinitLumieres(){
-  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; });
+  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; });
   links.forEach(l => delete l.lit);
 }
 
@@ -822,9 +886,12 @@ async function executer(i, vitesse, token){
     if (dejaVu.has(etat)){ cur.stuck = true; majEtats(); return "boucle"; }
     dejaVu.add(etat);
     if (cur.type === "out"){
-      const bon = cur.key === act.attendu(n);
+      if (act.detailFin){ const d = act.detailFin(n, cur.key); if (d) cur.extra = d; }
+      const verdict = act.valide ? act.valide(n, v, cur.key) : cur.key === act.attendu(n);
+      if (verdict === "etape"){ cur.lit = false; cur.stuck = true; majEtats(); return "etape"; }
+      const bon = verdict === true;
       cur.lit = false; cur.res = bon ? "ok" : "ko"; majEtats();
-      if (bon && act.bilan) dernierBilan = act.variables ? act.bilan(n, v) : act.bilan(n, nbActions, v);
+      if (bon && act.bilan) dernierBilan = act.etatInitial ? act.bilan(n, v) : act.bilan(n, nbActions, v);
       return bon ? "ok" : "ko";
     }
     let port = "next";
@@ -833,7 +900,8 @@ async function executer(i, vitesse, token){
       const nv = a.f(v);
       if (nv == null){ cur.stuck = true; majEtats(); return "sansvaleur"; }
       v = nv; nbActions++;
-      start.cur = v; majEtats(); await attendre(delai(cur)/2);
+      if (!act.etatInitial || act.variables) start.cur = v;
+      majEtats(); await attendre(delai(cur)/2);
       if (token !== runToken) return null;
     }
     if (cur.type === "cond"){
@@ -861,6 +929,7 @@ function texteResultat(i, r){
   if (r === "ok") return `✔ Pour ${n}, ta machine donne la bonne réponse.` + (dernierBilan ? " " + dernierBilan : "");
   if (r === "ko") return `✘ Pour ${n}, ta machine se trompe !`;
   if (r === "bloque") return `⚠ Pour ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
+  if (r === "etape") return `⚠ Pour ${n}, ta machine arrive à la bonne conclusion, mais il manque une étape de calcul ou elle n'est pas dans le bon ordre (bloc en orange).`;
   if (r === "sansvaleur") return `⚠ Pour ${n}, la machine utilise ${(act.variables || ["une variable"]).join(", ")} alors qu'elle n'a pas encore de valeur (bloc en orange) !`;
   if (r === "nodebut") return "⚠ Ta machine n'a pas de bloc Début : glisse-le depuis le menu.";
   return `⚠ Pour ${n}, la machine tourne en rond : elle repasse au même endroit sans que n change (bloc en orange) !`;

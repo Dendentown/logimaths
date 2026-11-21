@@ -14,17 +14,24 @@ Jeu de logique : l'élève construit une **machine de vérification** sous forme
 
 On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lancer la vérification** : les blocs traversés s'allument en **blanc**, et la sortie atteinte s'affiche en **vert** (bonne réponse) ou en **rouge** (mauvaise réponse).
 
-## Activité 3 — Théorème de Pythagore
+## Activité 3 — Calculer une longueur avec le théorème de Pythagore
+- Les côtés sont notés a, b, c ; on connaît b et c, a = ? (en bleu sur la figure). Entrée : `Le triangle : [   ]`
+- Conditions : « Le triangle est rectangle », « a est l'hypoténuse »
+- Actions : « c² + b² = a² », « a² + b² = c² », « a² = c² − b² »
+- Fin : « a = √(c² − b²) », « a = √(c² + b²) », « On ne peut pas utiliser le théorème de Pythagore »
+- En arrivant sur une Fin de calcul, le bloc affiche l'égalité avec les valeurs puis la valeur de a.
+
+## Activité 4 — Théorème de Pythagore
 - On connaît les angles du triangle ABC. Entrée : `Â ; B̂ ; Ĉ = [   ]`
 - Conditions : « Le triangle ABC est rectangle en A », « Le triangle ABC est rectangle en B », « Le triangle ABC est rectangle en C »
 - Fin : « BC² = AB² + AC² », « AC² = AB² + BC² », « AB² = AC² + BC² », « On ne peut pas conclure avec le théorème de Pythagore »
 
-## Activité 4 — Réciproque et contraposée du théorème de Pythagore
+## Activité 5 — Réciproque et contraposée du théorème de Pythagore
 - On connaît les longueurs des côtés du triangle ABC (figures cotées).
 - Conditions : « BC² = AB² + AC² », « AC² = AB² + BC² », « AB² = AC² + BC² »
 - Fin : « ABC est rectangle en A / en B / en C », « ABC n'est pas rectangle »
 
-## Activité 5 — Multiple de 7 (division euclidienne)
+## Activité 6 — Multiple de 7 (division euclidienne)
 - Entrée : `n = [   ]` (n ne change jamais)
 - Actions (nouveaux blocs) : « r prend la valeur n », « r prend la valeur r − 7 » — permettent de faire une **boucle**
 - Conditions : « r ≥ 7 », « r = 0 »
