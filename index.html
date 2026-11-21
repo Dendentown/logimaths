@@ -309,10 +309,14 @@ footer > .ligne:first-child{min-width:0;max-width:100%}
 // racine carrée dont la barre couvre tout le calcul (sans parenthèses)
 function rac(x){ return `<span class="rac"><i>√</i><span>${x}</span></span>`; }
 // écriture décimale française (virgule)
-const fr = x => String(x).replace(".", ",");
+const fr = x => String(x).replace(".", ",").replace(/^-/, "−");
 // h² = a² + b² ? (avec une petite tolérance pour les décimaux)
 const egalite = (h, a, b) => Math.abs(h*h - a*a - b*b) < 1e-9;
 
+// activité « un nombre est-il solution ? » : les deux membres de 3x − 5 = 2x + 1
+const membreG = x => 3 * x - 5, membreD = x => 2 * x + 1;
+// un nombre négatif est écrit entre parenthèses dans un produit : 3 × (−3)
+const par = x => x < 0 ? `(${fr(x).replace("-", "−")})` : fr(x);
 // somme des chiffres d'un nombre entier
 function sommeChiffres(x){ return String(Math.abs(x)).split("").reduce((s, c) => s + Number(c), 0); }
 // outils pour l'activité 5 (triangle [AB, AC, BC])
@@ -584,6 +588,44 @@ const ACTIVITES = [
     // mesures d'angles affichées sur certaines figures (index de la figure → sommets)
     anglesAffiches: { 5: ["A"], 7: ["C"] },
     nombres: [[90, 30, 60], [40, 90, 50], [60, 60, 60], [90, 45, 45], [30, 60, 90], [100, 40, 40], [90, 20, 70], [50, 50, 80]]
+  },
+  {
+    id: "solution",
+    titre: "Activité 9 — Un nombre est-il solution ?",
+    consigne: "Fais un logigramme qui permet de vérifier si un nombre <b>x</b> est solution de l'équation <b>3x − 5 = 2x + 1</b>.",
+    entree: "x =",
+    affiche: x => fr(x),
+    nomEntree: x => "x = " + fr(x),
+    etatInitial: x => ({ t: x, calc: [] }),
+    suiviTests: true,
+    conditions: [
+      // quand on teste l'égalité, les deux blocs de calcul clignotent
+      { key: "egal", texte: "3x − 5 = 2x + 1", test: e => Math.abs(membreG(e.t) - membreD(e.t)) < 1e-9, lie: ["cG", "cD"] }
+    ],
+    actions: [
+      { key: "cG", texte: "On calcule 3x − 5", f: e => calcule(e, "cG"),
+        detail: x => [`3x − 5 = 3 × ${par(x)} − 5`, `= ${fr(r2(3 * x))} − 5`, `= ${fr(r2(membreG(x)))}`] },
+      { key: "cD", texte: "On calcule 2x + 1", f: e => calcule(e, "cD"),
+        detail: x => [`2x + 1 = 2 × ${par(x)} + 1`, `= ${fr(r2(2 * x))} + 1`, `= ${fr(r2(membreD(x)))}`] }
+    ],
+    sorties: [
+      { key: "oui", texte: "x est solution de l'équation" },
+      { key: "non", texte: "x n'est pas solution de l'équation" }
+    ],
+    attendu: x => (Math.abs(membreG(x) - membreD(x)) < 1e-9 ? "oui" : "non"),
+    // bonne fin : il faut aussi avoir calculé les deux membres avant de les comparer (sinon il manque une étape : orange)
+    valide: (x, e, fin) => {
+      if (fin !== (Math.abs(membreG(x) - membreD(x)) < 1e-9 ? "oui" : "non")) return false;
+      const test = (e.tests || []).find(k => k.key === "egal");
+      if (!test || !["cG", "cD"].every(k => test.calc.includes(k))) return "etape";
+      return true;
+    },
+    bilan: (x, e) => {
+      const g = fr(r2(membreG(x))), d = fr(r2(membreD(x)));
+      return g === d ? `3x − 5 = ${g} et 2x + 1 = ${d} : les deux membres sont égaux, donc ${fr(x)} est solution.`
+                     : `3x − 5 = ${g} et 2x + 1 = ${d} : les deux membres ne sont pas égaux, donc ${fr(x)} n'est pas solution.`;
+    },
+    nombres: [4, 6, 0, -3, 10, 2.5]
   }
 ];
 const aff = v => act.affiche ? act.affiche(v) : String(v);
@@ -607,6 +649,11 @@ const MODELES = {
   "multiple5": MODELE_NOMBRE(100000),
   "multiple7-i": MODELE_NOMBRE(300),
   "multiple3": MODELE_NOMBRE(1000000000),
+  "solution": {
+    champs: [{ k: "x", label: "x =", type: "number", step: "any", def: 7 }],
+    construire: f => nb(f.x),
+    erreur: f => (f.x === "" || !isFinite(nb(f.x))) ? "Écris un nombre (il peut être négatif ou décimal)." : null
+  },
   "pythagore-longueur": {
     champs: [...COTES(["b", "c"], [5, 12]),
       { k: "rect", label: "Le triangle est rectangle", type: "select", choix: [["oui", "Oui"], ["non", "Non"]], def: "oui" },
@@ -809,7 +856,8 @@ function remplirNombres(){
   act.nombres.forEach((v, i) => {
     const b = document.createElement("button");
     const perso = i >= act.base.length;
-    b.className = "num" + (act.affiche ? " fig" : "") + (perso ? " perso" : ""); b.innerHTML = aff(v); b.dataset.n = i;
+    const h = aff(v);
+    b.className = "num" + (h.startsWith("<svg") ? " fig" : "") + (perso ? " perso" : ""); b.innerHTML = h; b.dataset.n = i;
     b.addEventListener("pointerdown", e => dragNombre(e, i));
     if (perso){
       const x = document.createElement("span"); x.className = "suppr"; x.textContent = "×"; x.title = "Supprimer ce modèle";

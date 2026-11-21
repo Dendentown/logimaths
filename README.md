@@ -52,6 +52,13 @@ On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lance
 - Conditions : « Le triangle ABC est rectangle en A », « Le triangle ABC est rectangle en B », « Le triangle ABC est rectangle en C »
 - Fin : « BC² = AB² + AC² », « AC² = AB² + BC² », « AB² = AC² + BC² », « On ne peut pas conclure avec le théorème de Pythagore »
 
+## Activité 9 — Un nombre est-il solution ?
+- Équation : 3x − 5 = 2x + 1. Entrée : `x = [   ]` (nombres négatifs et décimaux possibles)
+- Actions : « On calcule 3x − 5 », « On calcule 2x + 1 » — le calcul s'affiche à côté du bloc, ligne par ligne
+- Condition : « 3x − 5 = 2x + 1 » (les deux blocs de calcul clignotent quand on la teste)
+- Fin : « x est solution de l'équation », « x n'est pas solution de l'équation »
+- Bonne fin sans avoir calculé les deux membres avant la comparaison : il manque une étape (orange).
+
 ## Comment jouer
 - Glisser un bloc de la palette dans la zone (ou le toucher).
 - Toucher un point jaune ● (sortie d'un bloc, « Oui » / « Non »), puis toucher le bloc d'arrivée pour tracer une flèche.
