@@ -50,6 +50,9 @@ main{flex:1;display:flex;min-height:0}
 .egal .g:first-child,.egal .g:nth-child(3n+1){text-align:right}
 .egal .plein{grid-column:1 / 4;text-align:center}
 .block.out.revele .face{border-color:#fff;box-shadow:0 0 22px 6px rgba(255,255,255,.55)}
+.block.cond .face{flex-direction:column}
+.valcond{margin-top:5px;font-size:14px;font-weight:800;white-space:nowrap}
+.valcond.flash{animation:flashLigne .9s ease-out}
 .calc.flash{animation:flashLigne .9s ease-out}
 /* ce sont les lettres et les symboles qui clignotent en blanc (pas de fond) */
 @keyframes flashLigne{0%{opacity:0;color:#fff;text-shadow:0 0 6px #fff,0 0 12px #fff}20%{opacity:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #fff}40%{opacity:.25}60%{opacity:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #fff}100%{opacity:1;text-shadow:none}}
@@ -317,6 +320,9 @@ const egalite = (h, a, b) => Math.abs(h*h - a*a - b*b) < 1e-9;
 const membreG = x => 3 * x - 5, membreD = x => 2 * x + 1;
 // un nombre négatif est écrit entre parenthèses dans un produit : 3 × (−3)
 const par = x => x < 0 ? `(${fr(x).replace("-", "−")})` : fr(x);
+// égalité de Pythagore avec les valeurs : h² = a² + b²  →  « 25 = 9 + 16 »
+// (avec « ≠ » quand l'égalité est fausse)
+const egaliteValeurs = (h, a, b) => `${fr(r2(h * h))} ${egalite(h, a, b) ? "=" : "≠"} ${fr(r2(a * a))} + ${fr(r2(b * b))}`;
 // somme des chiffres d'un nombre entier
 function sommeChiffres(x){ return String(Math.abs(x)).split("").reduce((s, c) => s + Number(c), 0); }
 // outils pour l'activité 5 (triangle [AB, AC, BC])
@@ -369,10 +375,10 @@ const ACTIVITES = [
     variables: ["k"],
     etatInitial: n => ({ n }),
     conditions: [
-      { key: "q10", texte: "k ≥ 10", test: e => e.k == null ? null : e.k >= 10 },
-      { key: "q3", texte: "k = 3", test: e => e.k == null ? null : e.k === 3 },
-      { key: "q6", texte: "k = 6", test: e => e.k == null ? null : e.k === 6 },
-      { key: "q9", texte: "k = 9", test: e => e.k == null ? null : e.k === 9 }
+      { key: "q10", texte: "k ≥ 10", test: e => e.k == null ? null : e.k >= 10, valeurs: e => e.k == null ? null : `${e.k} ${e.k >= 10 ? "≥" : "<"} 10` },
+      { key: "q3", texte: "k = 3", test: e => e.k == null ? null : e.k === 3, valeurs: e => e.k == null ? null : `${e.k} ${e.k === 3 ? "=" : "≠"} 3` },
+      { key: "q6", texte: "k = 6", test: e => e.k == null ? null : e.k === 6, valeurs: e => e.k == null ? null : `${e.k} ${e.k === 6 ? "=" : "≠"} 6` },
+      { key: "q9", texte: "k = 9", test: e => e.k == null ? null : e.k === 9, valeurs: e => e.k == null ? null : `${e.k} ${e.k === 9 ? "=" : "≠"} 9` }
     ],
     actions: [
       { key: "qn", texte: "k prend la valeur n", f: e => ({ ...e, k: e.n }) },
@@ -400,8 +406,8 @@ const ACTIVITES = [
     variables: ["r"],
     etatInitial: n => ({ n }),
     conditions: [
-      { key: "i7", texte: "r ≥ 7", test: e => e.r == null ? null : e.r >= 7 },
-      { key: "i0", texte: "r = 0", test: e => e.r == null ? null : e.r === 0 }
+      { key: "i7", texte: "r ≥ 7", test: e => e.r == null ? null : e.r >= 7, valeurs: e => e.r == null ? null : `${e.r} ${e.r >= 7 ? "≥" : "<"} 7` },
+      { key: "i0", texte: "r = 0", test: e => e.r == null ? null : e.r === 0, valeurs: e => e.r == null ? null : `${e.r} ${e.r === 0 ? "=" : "≠"} 0` }
     ],
     // blocs Action : ils modifient r, puis la machine continue
     actions: [
@@ -434,9 +440,9 @@ const ACTIVITES = [
       { key: "gAC", texte: "AC est le plus grand côté", test: e => plusGrand(e.t) === "AC" },
       { key: "gBC", texte: "BC est le plus grand côté", test: e => plusGrand(e.t) === "BC" },
       // « lie » : blocs de calcul qui clignotent quand on teste cette égalité
-      { key: "egalA", texte: "BC² = AB² + AC²", test: e => egalite(e.t[2], e.t[0], e.t[1]), lie: ["cBC", "sABAC"] },
-      { key: "egalB", texte: "AC² = AB² + BC²", test: e => egalite(e.t[1], e.t[0], e.t[2]), lie: ["cAC", "sABBC"] },
-      { key: "egalC", texte: "AB² = AC² + BC²", test: e => egalite(e.t[0], e.t[1], e.t[2]), lie: ["cAB", "sACBC"] }
+      { key: "egalA", texte: "BC² = AB² + AC²", test: e => egalite(e.t[2], e.t[0], e.t[1]), lie: ["cBC", "sABAC"], valeurs: e => egaliteValeurs(e.t[2], e.t[0], e.t[1]) },
+      { key: "egalB", texte: "AC² = AB² + BC²", test: e => egalite(e.t[1], e.t[0], e.t[2]), lie: ["cAC", "sABBC"], valeurs: e => egaliteValeurs(e.t[1], e.t[0], e.t[2]) },
+      { key: "egalC", texte: "AB² = AC² + BC²", test: e => egalite(e.t[0], e.t[1], e.t[2]), lie: ["cAB", "sACBC"], valeurs: e => egaliteValeurs(e.t[0], e.t[1], e.t[2]) }
     ],
     // blocs de calcul : le détail s'affiche à côté du bloc, ligne par ligne
     actions: [
@@ -486,9 +492,9 @@ const ACTIVITES = [
     affiche: t => figureCotes(t),
     nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
     conditions: [
-      { key: "egalA", texte: "BC² = AB² + AC²", test: t => egalite(t[2], t[0], t[1]) },
-      { key: "egalB", texte: "AC² = AB² + BC²", test: t => egalite(t[1], t[0], t[2]) },
-      { key: "egalC", texte: "AB² = AC² + BC²", test: t => egalite(t[0], t[1], t[2]) }
+      { key: "egalA", texte: "BC² = AB² + AC²", test: t => egalite(t[2], t[0], t[1]), valeurs: t => egaliteValeurs(t[2], t[0], t[1]) },
+      { key: "egalB", texte: "AC² = AB² + BC²", test: t => egalite(t[1], t[0], t[2]), valeurs: t => egaliteValeurs(t[1], t[0], t[2]) },
+      { key: "egalC", texte: "AB² = AC² + BC²", test: t => egalite(t[0], t[1], t[2]), valeurs: t => egaliteValeurs(t[0], t[1], t[2]) }
     ],
     sorties: [
       { key: "rectA", texte: "ABC est rectangle en A" },
@@ -600,7 +606,7 @@ const ACTIVITES = [
     suiviTests: true,
     conditions: [
       // quand on teste l'égalité, les deux blocs de calcul clignotent
-      { key: "egal", texte: "3x − 5 = 2x + 1", test: e => Math.abs(membreG(e.t) - membreD(e.t)) < 1e-9, lie: ["cG", "cD"] }
+      { key: "egal", texte: "3x − 5 = 2x + 1", test: e => Math.abs(membreG(e.t) - membreD(e.t)) < 1e-9, lie: ["cG", "cD"], valeurs: e => `${fr(r2(membreG(e.t)))} ${Math.abs(membreG(e.t) - membreD(e.t)) < 1e-9 ? "=" : "≠"} ${fr(r2(membreD(e.t)))}` }
     ],
     actions: [
       { key: "cG", texte: "On calcule 3x − 5", f: e => calcule(e, "cG"),
@@ -804,7 +810,7 @@ function etatInitial(){
 }
 function sauver(){
   // on n'enregistre pas les lumières du dernier test
-  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "bulle", "bulleNew"];
+  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "valLigne", "valFlash", "bulle", "bulleNew"];
   try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId }, (k, v) => tmp.includes(k) ? undefined : v)); } catch(e){}
 }
 function charger(){
@@ -940,7 +946,11 @@ function texteBloc(b){
     const contenu = b.cur != null ? aff(b.cur) : (i != null ? aff(act.nombres[i]) : "");
     return `${act.entree || "n ="} <span class="slot${i != null ? " plein" : ""}${b.cur != null && b.cur !== act.nombres[i] ? " change" : ""}">${contenu}</span>`;
   }
-  if (b.type === "cond") return act.conditions.find(c => c.key === b.key)?.texte ?? "?";
+  if (b.type === "cond"){
+    const t = act.conditions.find(c => c.key === b.key)?.texte ?? "?";
+    // sous l'égalité / l'inégalité : la même avec les valeurs (elle clignote en blanc en apparaissant)
+    return b.valLigne ? `<div>${t}</div><div class="valcond${b.valFlash ? " flash" : ""}">${b.valLigne}</div>` : t;
+  }
   if (b.type === "act"){
     const t = (act.actions || []).find(a => a.key === b.key)?.texte ?? "?";
     if (!b.bulle) return t;
@@ -1373,7 +1383,7 @@ function majEtats(){
     el.classList.toggle("ko", b.res === "ko");
     el.classList.toggle("etape", b.res === "etape");
     el.classList.toggle("stuck", !!b.stuck);
-    if (b.type === "start" || b.type === "out" || b.type === "act") el.querySelector(".face").innerHTML = texteBloc(b);
+    if (b.type === "start" || b.type === "out" || b.type === "act" || b.type === "cond") el.querySelector(".face").innerHTML = texteBloc(b);
     if (b.type === "out") el.classList.toggle("calcul", !!b.extra);
     // un bloc qui affiche ses calculs passe devant tous les autres blocs
     el.classList.toggle("abulle", !!b.bulle);
@@ -1382,7 +1392,7 @@ function majEtats(){
   dessinerLiens();
 }
 function reinitLumieres(){
-  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; });
+  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; delete b.valLigne; delete b.valFlash; });
   links.forEach(l => delete l.lit);
 }
 
@@ -1464,6 +1474,15 @@ async function executer(i, vitesse, token){
     l.lit = true; majEtats(); await attendre(delai(cur)/2);
     if (token !== runToken) return null;
     cur = blocks.find(b => b.id === l.to);
+    if (cur.type === "cond"){
+      const c = act.conditions.find(c => c.key === cur.key), ligne = c && c.valeurs ? c.valeurs(v) : null;
+      if (ligne){
+        // la ligne avec les valeurs apparaît et clignote, puis le losange s'allume
+        cur.valLigne = ligne; cur.valFlash = true; majEtats();
+        await attendre(Math.max(700, vitesse * 1.4)); if (token !== runToken) return null;
+        delete cur.valFlash;
+      }
+    }
     cur.lit = true; majEtats(); await attendre(delai(cur));
     if (++pas > 300) return "boucle";
   }

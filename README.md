@@ -59,6 +59,9 @@ On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lance
 - Fin : « x est solution de l'équation », « x n'est pas solution de l'équation »
 - Bonne fin sans avoir calculé les deux membres avant la comparaison : il manque une étape (orange).
 
+## Conditions avec les valeurs
+Pour chaque condition qui est une égalité ou une inégalité (k ≥ 10, r = 0, BC² = AB² + AC², 3x − 5 = 2x + 1…), la même relation écrite avec les valeurs apparaît sous la condition en clignotant, puis le losange s'allume. Le symbole s'adapte : « 25 = 9 + 16 », « 60,84 ≠ 25 + 36 », « 4 < 10 ».
+
 ## Comment jouer
 - Glisser un bloc de la palette dans la zone (ou le toucher).
 - Toucher un point jaune ● (sortie d'un bloc, « Oui » / « Non »), puis toucher le bloc d'arrivée pour tracer une flèche.
