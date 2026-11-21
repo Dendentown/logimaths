@@ -27,8 +27,11 @@ main{flex:1;display:flex;min-height:0}
 #palette{width:240px;flex-shrink:0;background:var(--panel);padding:10px 12px;overflow:auto;border-right:1px solid var(--line)}
 #palette h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:12px 0 6px}
 .pal{background:var(--block);border:2px solid var(--blockb);border-radius:10px;padding:9px 10px;margin-bottom:8px;font-size:13px;cursor:grab;touch-action:none;user-select:none;position:relative}
-.pal.cond{border-color:#7a8fd6}
-.pal.cond::before{content:"◆ ";color:#7a8fd6}
+.pal.cond{width:206px;height:112px;padding:0;background:none;border:none;border-radius:0;margin:0 auto 8px}
+.pal.cond .bord,.pal.cond .face{position:absolute;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.pal.cond .bord{inset:0;background:#7a8fd6;transition:background .15s}
+.pal.cond .face{inset:2px;background:var(--block);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 44px;font-size:12px;line-height:1.2}
+.pal.cond:hover .bord{background:var(--accent)}
 .pal.out::before{content:"■ ";color:var(--accent)}
 .pal:hover{border-color:var(--accent)}
 .pal.pris{opacity:.35;cursor:not-allowed;border-style:dashed}
@@ -105,6 +108,8 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
   #palette{width:auto;max-height:150px;border-right:none;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
   #palette h3,.aide{display:none}
   .pal{margin:0;font-size:12px;padding:6px 8px}
+  .pal.cond{width:170px;height:90px;margin:0}
+  .pal.cond .face{font-size:11px;padding:0 36px}
   #consigne{font-size:13px}
 }
 </style>
@@ -254,7 +259,9 @@ function chargerActivite(i){
 
 function itemPalette(type, key, texte){
   const d = document.createElement("div");
-  d.className = "pal " + type; d.textContent = texte; d.dataset.key = key;
+  d.className = "pal " + type; d.dataset.key = key;
+  if (type === "cond") d.innerHTML = `<div class="bord"></div><div class="face">${texte}</div>`;
+  else d.textContent = texte;
   d.addEventListener("pointerdown", e => dragPalette(e, type, key, texte));
   return d;
 }
