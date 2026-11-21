@@ -31,7 +31,7 @@ On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lance
 - Entrée : figure cotée du triangle ABC.
 - Conditions : « AB / AC / BC est le plus grand côté », « BC² = AB² + AC² », « AC² = AB² + BC² », « AB² = AC² + BC² »
 - Actions : « On calcule AB² », « On calcule AC² », « On calcule BC² », « On calcule AB² + AC² », « On calcule AB² + BC² », « On calcule AC² + BC² » — le détail du calcul s'affiche à côté du bloc, ligne par ligne en clignotant.
-- Fin : « ABC est rectangle en A / en B / en C », « ABC n'est pas rectangle »
+- Fin : « ABC est rectangle en A / en B / en C », « ABC n'est pas rectangle », « C'est absurde »
 - Il faut tester l'égalité du plus grand côté (sinon faux) et avoir fait les deux calculs avant ce test (sinon étape manquante : orange).
 
 ## Activité 6 — Réciproque et contraposée du théorème de Pythagore

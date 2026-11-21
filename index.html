@@ -435,7 +435,9 @@ const ACTIVITES = [
       { key: "rectA", texte: "ABC est rectangle en A" },
       { key: "rectB", texte: "ABC est rectangle en B" },
       { key: "rectC", texte: "ABC est rectangle en C" },
-      { key: "nonrect", texte: "ABC n'est pas rectangle" }
+      { key: "nonrect", texte: "ABC n'est pas rectangle" },
+      // pour la branche impossible : aucun des trois côtés ne serait le plus grand
+      { key: "absurde", texte: "C'est absurde" }
     ],
     attendu: t => attenduCotes(t),
     // la bonne fin ne suffit pas : il faut avoir testé l'égalité du plus grand côté (sinon faux),
