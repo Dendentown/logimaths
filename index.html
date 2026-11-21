@@ -150,7 +150,7 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
     <button class="btn main" id="btnLancer">▶ Lancer la vérification</button>
     <button class="btn" id="btnTous">⏩ Tout tester</button>
   </div>
-  <div id="msg">Construis ta machine, glisse un nombre dans la case, puis lance la vérification.</div>
+  <div id="msg">Construis ta machine, glisse une valeur dans la case jaune, puis lance la vérification.</div>
 </footer>
 
 <div id="ghost"></div>
@@ -234,6 +234,15 @@ let pointeur = null;
 function etatInitial(){
   blocks = [{ id: 1, type: "start", x: 60, y: 30 }];
   links = []; nextId = 2;
+  centrerDepart();
+}
+// place le bloc de départ en haut, au centre de la zone visible (les autres blocs suivent)
+function centrerDepart(){
+  const st = blocks.find(b => b.type === "start"); if (!st) return;
+  const cible = Math.max(20, Math.round((zone.clientWidth - DIM.start.w) / 2));
+  const dx = cible - st.x, dy = 30 - st.y;
+  if (!dx && !dy) return;
+  blocks.forEach(b => { b.x += dx; b.y += dy; borner(b); });
 }
 function sauver(){
   try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId })); } catch(e){}
@@ -282,7 +291,7 @@ function chargerActivite(i){
   });
   DIM.start.w = act.largeurDepart || 190;
   $("#labNombres").textContent = act.affiche ? "Glisse un triangle dans la case :" : "Glisse un nombre dans la case :";
-  nCourant = null; charger(); rendu(); effacerEtats();
+  nCourant = null; charger(); centrerDepart(); sauver(); rendu(); effacerEtats();
 }
 
 function itemPalette(type, key, texte){
@@ -694,6 +703,8 @@ async function testerTous(){
 }
 
 /* ===================== Démarrage ===================== */
+let resizeTimer = null;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { centrerDepart(); sauver(); rendu(); majEtats(); }, 200); });
 document.addEventListener("dragstart", e => e.preventDefault());
 document.addEventListener("selectstart", e => { if (e.target.closest && e.target.closest("#palette,#ws,#nombres")) e.preventDefault(); });
 ACTIVITES.forEach((a, i) => { const o = document.createElement("option"); o.value = i; o.textContent = a.titre; $("#choixAct").appendChild(o); });
