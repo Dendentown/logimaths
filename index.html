@@ -293,7 +293,8 @@ const ACTIVITES = [
       const l1 = "a = " + rac(`${fr(t.c)}² ${fin === "plus" ? "+" : "−"} ${fr(t.b)}²`);
       if (sq < 0) return [l1, "impossible : " + fr(t.c) + "² − " + fr(t.b) + "² < 0"];
       const a = Math.sqrt(sq);
-      return [l1, Number.isInteger(a) ? `a = ${a}` : `a ≈ ${fr(Math.round(a * 100) / 100)}`];
+      // étape intermédiaire : le terme sous la racine est calculé
+      return [l1, "a = " + rac(fr(Math.round(sq * 100) / 100)), Number.isInteger(a) ? `a = ${a}` : `a ≈ ${fr(Math.round(a * 100) / 100)}`];
     },
     bilan: (t, e) => t.hyp === "a" ? `a = ${rac(`${t.c}² + ${t.b}²`)} = ${rac(t.c*t.c + t.b*t.b)} = ${fr(Math.sqrt(t.c*t.c + t.b*t.b))}.`
                    : t.hyp === "c" ? `a = ${rac(`${t.c}² − ${t.b}²`)} = ${rac(t.c*t.c - t.b*t.b)} = ${fr(Math.sqrt(t.c*t.c - t.b*t.b))}.` : "",
