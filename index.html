@@ -30,6 +30,8 @@ main{flex:1;display:flex;min-height:0}
 .pal.cond::before{content:"◆ ";color:#7a8fd6}
 .pal.out::before{content:"■ ";color:var(--accent)}
 .pal:hover{border-color:var(--accent)}
+.pal.pris{opacity:.35;cursor:not-allowed;border-style:dashed}
+.pal.pris:hover{border-color:var(--blockb)}
 .aide{font-size:12px;color:var(--muted);line-height:1.4;margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
 #zone{flex:1;overflow:auto;position:relative;min-width:0}
 #ws{position:relative;width:1100px;height:820px;background-image:radial-gradient(var(--grid) 1.6px,transparent 1.6px);background-size:24px 24px}
@@ -200,7 +202,17 @@ function sauver(){
 function charger(){
   try {
     const d = JSON.parse(localStorage.getItem("logimaths-" + act.id));
-    if (d && d.blocks && d.blocks.some(b => b.type === "start")) { blocks = d.blocks; links = d.links; nextId = d.nextId; return; }
+    if (d && d.blocks && d.blocks.some(b => b.type === "start")) {
+      blocks = d.blocks; links = d.links; nextId = d.nextId;
+      // une seule sortie de chaque type : on fusionne les doublons des anciennes sauvegardes
+      const garde = {};
+      blocks.filter(b => b.type === "out").forEach(b => {
+        if (!garde[b.key]) { garde[b.key] = b.id; return; }
+        links.forEach(l => { if (l.to === b.id) l.to = garde[b.key]; });
+        blocks = blocks.filter(x => x.id !== b.id);
+      });
+      return;
+    }
   } catch(e){}
   etatInitial();
 }
@@ -220,7 +232,8 @@ function chargerActivite(i){
      • Touche un <span style="color:var(--accent)">●</span> puis touche un bloc pour tracer une flèche.<br>
      • Touche une flèche pour l'effacer.<br>
      • Le × supprime un bloc.<br>
-     • Tu peux utiliser plusieurs fois le même bloc.</div>`);
+     • Tu peux poser plusieurs fois une condition.<br>
+     • Chaque sortie ne se pose qu'une fois : plusieurs flèches peuvent arriver sur la même sortie.</div>`);
   const nb = $("#nombres"); nb.innerHTML = "";
   act.nombres.forEach(n => {
     const b = document.createElement("button");
@@ -233,7 +246,7 @@ function chargerActivite(i){
 
 function itemPalette(type, key, texte){
   const d = document.createElement("div");
-  d.className = "pal " + type; d.textContent = texte;
+  d.className = "pal " + type; d.textContent = texte; d.dataset.key = key;
   d.addEventListener("pointerdown", e => dragPalette(e, type, key, texte));
   return d;
 }
@@ -253,6 +266,8 @@ function ports(b){
 }
 
 function rendu(){
+  document.querySelectorAll(".pal.out").forEach(p =>
+    p.classList.toggle("pris", blocks.some(b => b.type === "out" && b.key === p.dataset.key)));
   ws.querySelectorAll(".block").forEach(e => e.remove());
   blocks.forEach(b => {
     const d = DIM[b.type];
@@ -360,6 +375,10 @@ function dragBloc(e, b, el){
 
 function dragPalette(e, type, key, texte){
   e.preventDefault(); stopRun();
+  if (type === "out" && blocks.some(b => b.type === "out" && b.key === key)){
+    msg("⚠ Cette sortie est déjà posée. Tu peux faire arriver plusieurs flèches sur la même sortie.", "warn");
+    return;
+  }
   const g = $("#ghost"); g.textContent = texte;
   const x0 = e.clientX, y0 = e.clientY; let bouge = false;
   const move = ev => {
