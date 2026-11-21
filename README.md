@@ -53,5 +53,14 @@ On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lance
 - Glisser un nombre dans la case `n = [   ]` (ou le toucher), puis cliquer sur « Lancer la vérification ».
 - « Tester tous les nombres » : la machine est validée si elle répond juste pour tous.
 
+## Créer un modèle
+Le bouton **＋ Créer un modèle** (à côté de « Tout tester ») ouvre une fenêtre pour fabriquer sa propre valeur de test :
+- activités avec un nombre : on choisit n ;
+- activité 3 : longueurs b et c, hypoténuse (a, b, c ou aucune) ;
+- activité 4 : les trois angles, et les mesures à écrire sur la figure ;
+- activités 5 et 6 : les longueurs AB, AC et BC.
+La figure se dessine en direct, les valeurs impossibles sont refusées (somme des angles ≠ 180°, triangle qui n'existe pas…).
+Les modèles s'ajoutent aux valeurs de test (bordure en pointillés), sont gardés dans le navigateur et se suppriment avec la croix.
+
 ## Ajouter une activité
 Dans `index.html`, copier un objet du tableau `ACTIVITES` (en haut du script) et changer les conditions, les sorties, la fonction `attendu` et la liste `nombres`.

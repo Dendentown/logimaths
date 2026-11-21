@@ -214,6 +214,25 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
 footer > .ligne:first-child{min-width:0;max-width:100%}
 #nombres{flex-wrap:nowrap;overflow-x:auto;min-width:0;max-width:100%;padding-bottom:3px}
 #nombres .num{flex:0 0 auto}
+.num{position:relative}
+.num.perso{border-style:dashed;border-color:var(--accent)}
+.num .suppr{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:#c0392b;color:#fff;border:2px solid #fff;font-size:14px;line-height:17px;font-weight:700;font-family:system-ui,sans-serif;text-align:center;cursor:pointer;z-index:2}
+#modele{position:fixed;inset:0;background:rgba(5,10,25,.8);display:none;align-items:center;justify-content:center;z-index:120;padding:12px}
+#modele.ouvert{display:flex}
+#modele .carte{background:var(--panel);border:2px solid var(--accent);border-radius:16px;padding:18px 22px;max-width:640px;width:100%;max-height:100%;overflow:auto}
+#modele h2{margin:0 0 12px;font-size:20px;color:var(--accent)}
+#modele .corps{display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+#mChamps{flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px}
+#mChamps label{display:flex;align-items:center;gap:8px;font-size:15px;justify-content:space-between}
+#mChamps input[type=number],#mChamps select{width:110px;font:inherit;font-size:16px;padding:6px 8px;border-radius:8px;border:2px solid var(--blockb);background:var(--block);color:var(--txt)}
+#mChamps .cases{display:flex;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+#mChamps .cases label{justify-content:flex-start;gap:4px}
+#mApercu{flex:0 0 auto;min-width:200px;min-height:120px;display:flex;align-items:center;justify-content:center;border:2px dashed var(--blockb);border-radius:12px;padding:8px;color:var(--txt)}
+#mApercu svg.fig{width:270px;height:auto}
+#mApercu .grosNombre{font-size:44px;font-weight:800;font-family:ui-monospace,Consolas,monospace}
+#mErreur{min-height:22px;margin:10px 0 4px;color:var(--warn);font-weight:700;font-size:14px}
+#modele .boutons{display:flex;gap:10px;justify-content:flex-end}
+@media (max-width:760px),(max-height:500px){ #btnModele .txt{display:none} #mApercu svg.fig{width:200px} #modele .carte{padding:12px 14px} }
 </style>
 </head>
 <body>
@@ -254,10 +273,22 @@ footer > .ligne:first-child{min-width:0;max-width:100%}
   <div class="ligne">
     <button class="btn main" id="btnLancer">▶ Lancer la vérification</button>
     <button class="btn" id="btnTous">⏩ Tout tester</button>
+    <button class="btn" id="btnModele">＋<span class="txt"> Créer un modèle</span></button>
   </div>
   <div id="msg"></div>
 </footer>
 
+<div id="modele">
+  <div class="carte">
+    <h2>Créer un modèle</h2>
+    <div class="corps">
+      <div id="mChamps"></div>
+      <div id="mApercu"></div>
+    </div>
+    <div id="mErreur"></div>
+    <div class="boutons"><button class="btn" id="mAnnuler">Annuler</button><button class="btn main" id="mAjouter">Ajouter ce modèle</button></div>
+  </div>
+</div>
 <div id="ghost"></div>
 <div id="bravo"><div class="carte"><h2>Bravo ! 🎉</h2><p id="bravoTxt"></p><button class="btn main" id="btnFermer">Continuer</button></div></div>
 
@@ -512,6 +543,60 @@ const ACTIVITES = [
 ];
 const aff = v => act.affiche ? act.affiche(v) : String(v);
 
+/* ===================== Modèles créés par le joueur ===================== */
+// pour chaque activité : les champs du formulaire, la construction de la valeur et sa vérification
+const nb = x => Number(String(x).replace(",", "."));
+const MODELE_NOMBRE = max => ({
+  champs: [{ k: "n", label: "n =", type: "number", min: 0, max, step: 1, def: 12 }],
+  construire: f => Math.round(nb(f.n)),
+  erreur: f => !(Number.isInteger(nb(f.n)) && nb(f.n) >= 0 && nb(f.n) <= max) ? `Choisis un nombre entier entre 0 et ${max}.` : null
+});
+const COTES = (cle, def) => cle.map((k, i) => ({ k, label: k + " =", type: "number", min: 0.1, step: 0.1, def: def[i], unite: "cm" }));
+function erreurTriangle(x, y, z){
+  if ([x, y, z].some(v => !(v > 0))) return "Toutes les longueurs doivent être positives.";
+  if (x >= y + z || y >= x + z || z >= x + y) return "Ce triangle n'existe pas : chaque côté doit être plus petit que la somme des deux autres.";
+  return null;
+}
+const MODELES = {
+  "multiple10": MODELE_NOMBRE(100000),
+  "multiple5": MODELE_NOMBRE(100000),
+  "multiple7-i": MODELE_NOMBRE(300),
+  "pythagore-longueur": {
+    champs: [...COTES(["b", "c"], [5, 12]),
+      { k: "hyp", label: "Hypoténuse", type: "select", choix: [["a", "a"], ["b", "b"], ["c", "c"], ["", "aucune (pas rectangle)"]], def: "a" },
+      { k: "aDessin", label: "a = (pour le dessin)", type: "number", min: 0.1, step: 0.1, def: 6, unite: "cm", si: f => !f.hyp }],
+    construire: f => ({ b: nb(f.b), c: nb(f.c), hyp: f.hyp || null, aDessin: nb(f.aDessin) }),
+    erreur: f => {
+      const b = nb(f.b), c = nb(f.c);
+      if (!(b > 0 && c > 0)) return "Les longueurs b et c doivent être positives.";
+      if (f.hyp === "c" && !(c > b)) return "Si c est l'hypoténuse, c doit être plus grand que b.";
+      if (f.hyp === "b" && !(b > c)) return "Si b est l'hypoténuse, b doit être plus grand que c.";
+      if (!f.hyp){
+        const a = nb(f.aDessin), e = erreurTriangle(a, b, c); if (e) return e;
+        if (egalite(a, b, c) || egalite(b, a, c) || egalite(c, a, b)) return "Avec ces longueurs, le triangle est rectangle : choisis son hypoténuse.";
+      }
+      return null;
+    }
+  },
+  "pythagore-direct": {
+    champs: [{ k: "A", label: "Â =", type: "number", min: 1, max: 178, step: 1, def: 90, unite: "°" },
+             { k: "B", label: "B̂ =", type: "number", min: 1, max: 178, step: 1, def: 35, unite: "°" },
+             { k: "C", label: "Ĉ =", type: "number", min: 1, max: 178, step: 1, def: 55, unite: "°" },
+             { k: "montrer", label: "Écrire la mesure de l'angle sur la figure :", type: "cases", choix: ["A", "B", "C"], def: [] }],
+    construire: f => { const t = [nb(f.A), nb(f.B), nb(f.C)]; t.montrer = f.montrer || []; return t; },
+    erreur: f => {
+      const t = [nb(f.A), nb(f.B), nb(f.C)];
+      if (t.some(x => !(x > 0))) return "Chaque angle doit être positif.";
+      if (Math.abs(t[0] + t[1] + t[2] - 180) > 1e-9) return `La somme des angles d'un triangle vaut 180° (ici ${fr(r2(t[0] + t[1] + t[2]))}°).`;
+      return null;
+    }
+  },
+  "pythagore-calculs": { champs: COTES(["AB", "AC", "BC"], [6, 8, 10]), construire: f => [nb(f.AB), nb(f.AC), nb(f.BC)], erreur: f => erreurTriangle(nb(f.AB), nb(f.AC), nb(f.BC)) },
+  "pythagore-rc": { champs: COTES(["AB", "AC", "BC"], [6, 8, 10]), construire: f => [nb(f.AB), nb(f.AC), nb(f.BC)], erreur: f => erreurTriangle(nb(f.AB), nb(f.AC), nb(f.BC)) }
+};
+function lireModeles(){ try { return JSON.parse(localStorage.getItem("logimaths-modeles-" + act.id)) || []; } catch(_){ return []; } }
+function ecrireModeles(l){ try { localStorage.setItem("logimaths-modeles-" + act.id, JSON.stringify(l)); } catch(_){} }
+
 /* ===================== Figures de triangles (avec codage) ===================== */
 // orientation différente pour chaque figure, pour que l'élève ne se fie pas à la position
 const ROTATIONS = [0, 22, 165, -18, 190, 32, -28, 172];
@@ -545,7 +630,9 @@ function dessinTriangle(P, opts){
     const sweep = a[0]*b[1] - a[1]*b[0] > 0 ? 1 : 0;
     svg += `<path d="M${f(V[0]+a[0]*R)} ${f(V[1]+a[1]*R)} A${R} ${R} 0 0 ${sweep} ${f(V[0]+b[0]*R)} ${f(V[1]+b[1]*R)}" fill="none" stroke="currentColor" stroke-width="1.4"/>`;
     const bi = u([a[0]+b[0], a[1]+b[1]], [0, 0]);
-    svg += `<text x="${f(V[0]+bi[0]*24)}" y="${f(V[1]+bi[1]*24)}" font-size="10" font-weight="600" fill="currentColor" text-anchor="middle" dominant-baseline="central">${txt}</text>`;
+    // angle aigu : la mesure est écrite un peu plus loin du sommet pour ne pas toucher les côtés
+    const ang = Math.acos(Math.max(-1, Math.min(1, a[0]*b[0] + a[1]*b[1]))) * 180 / Math.PI, dl = ang < 50 ? 36 : 24;
+    svg += `<text x="${f(V[0]+bi[0]*dl)}" y="${f(V[1]+bi[1]*dl)}" font-size="10" font-weight="600" fill="currentColor" text-anchor="middle" dominant-baseline="central">${txt}</text>`;
   });
   // côtés de même longueur (petits traits)
   (opts.traits || []).forEach(([k1, k2]) => {
@@ -580,7 +667,7 @@ function figureAngles(t){
   if (t[0] === t[2]) traits.push(["B","C"], ["A","B"]);
   if (t[1] === t[2]) traits.push(["A","C"], ["A","B"]);
   const uniq = [...new Map(traits.map(p => [p.join(""), p])).values()];
-  const angles = ((act.anglesAffiches || {})[i] || []).map(k => [k, t["ABC".indexOf(k)] + "°"]);
+  const angles = (t.montrer || (act.anglesAffiches || {})[i] || []).map(k => [k, fr(t["ABC".indexOf(k)]) + "°"]);
   return dessinTriangle(P, { rot: ROTATIONS[i % 8], droit, traits: uniq, angles, numero: i + 1 });
 }
 // triangle dont les côtés sont nommés a, b, c ; a est inconnu (« a = ? »)
@@ -656,16 +743,80 @@ function chargerActivite(i){
   }
   pal.insertAdjacentHTML("beforeend", "<h3>Fin</h3>");
   act.sorties.forEach(s => pal.appendChild(itemPalette("out", s.key, s.texte)));
-  const nb = $("#nombres"); nb.innerHTML = "";
-  act.nombres.forEach((v, i) => {
-    const b = document.createElement("button");
-    b.className = "num" + (act.affiche ? " fig" : ""); b.innerHTML = aff(v); b.dataset.n = i;
-    b.addEventListener("pointerdown", e => dragNombre(e, i));
-    nb.appendChild(b);
-  });
+  if (!act.base) act.base = act.nombres.slice();
+  remplirNombres();
+  $("#btnModele").style.display = MODELES[act.id] ? "" : "none";
   DIM.start.w = act.largeurDepart || 190; DIM.start.h = act.hauteurDepart || 60;
   nCourant = null; charger(); rendu(); effacerEtats();
   msg("", "");
+}
+
+// valeurs de test : celles de l'activité, puis les modèles créés par le joueur (bordure pointillée, croix pour supprimer)
+function remplirNombres(){
+  const persos = MODELES[act.id] ? lireModeles().map(f => MODELES[act.id].construire(f)) : [];
+  act.nombres = act.base.concat(persos);
+  const zoneN = $("#nombres"); zoneN.innerHTML = "";
+  act.nombres.forEach((v, i) => {
+    const b = document.createElement("button");
+    const perso = i >= act.base.length;
+    b.className = "num" + (act.affiche ? " fig" : "") + (perso ? " perso" : ""); b.innerHTML = aff(v); b.dataset.n = i;
+    b.addEventListener("pointerdown", e => dragNombre(e, i));
+    if (perso){
+      const x = document.createElement("span"); x.className = "suppr"; x.textContent = "×"; x.title = "Supprimer ce modèle";
+      x.addEventListener("pointerdown", e => { e.stopPropagation(); e.preventDefault(); supprimerModele(i - act.base.length); });
+      b.appendChild(x);
+    }
+    zoneN.appendChild(b);
+  });
+}
+function supprimerModele(k){
+  const l = lireModeles(); l.splice(k, 1); ecrireModeles(l);
+  stopRun(); nCourant = null; remplirNombres(); effacerEtats(); msg("", "");
+}
+
+/* ---- fenêtre « Créer un modèle » ---- */
+function ouvrirModele(){
+  const M = MODELES[act.id]; if (!M) return;
+  stopRun();
+  const zone = $("#mChamps"); zone.innerHTML = "";
+  M.champs.forEach(c => {
+    let html;
+    if (c.type === "select") html = `<label data-k="${c.k}">${c.label} <select name="${c.k}">${c.choix.map(([v, t]) => `<option value="${v}"${v === c.def ? " selected" : ""}>${t}</option>`).join("")}</select></label>`;
+    else if (c.type === "cases") html = `<div data-k="${c.k}"><div style="font-size:14px;margin-bottom:4px">${c.label}</div><div class="cases">${c.choix.map(v => `<label><input type="checkbox" name="${c.k}" value="${v}"> ${v}</label>`).join("")}</div></div>`;
+    else html = `<label data-k="${c.k}">${c.label} <span><input type="number" name="${c.k}" value="${c.def}" min="${c.min ?? ""}" max="${c.max ?? ""}" step="${c.step ?? "any"}" inputmode="decimal"> ${c.unite || ""}</span></label>`;
+    zone.insertAdjacentHTML("beforeend", html);
+  });
+  zone.querySelectorAll("input,select").forEach(el => el.addEventListener("input", majModele));
+  $("#modele").classList.add("ouvert");
+  majModele();
+}
+function lireChamps(){
+  const f = {};
+  MODELES[act.id].champs.forEach(c => {
+    if (c.type === "cases") f[c.k] = [...$("#mChamps").querySelectorAll(`input[name="${c.k}"]:checked`)].map(x => x.value);
+    else f[c.k] = $("#mChamps").querySelector(`[name="${c.k}"]`).value;
+  });
+  return f;
+}
+// aperçu en direct + vérification des valeurs
+function majModele(){
+  const M = MODELES[act.id], f = lireChamps();
+  M.champs.forEach(c => { const el = $("#mChamps").querySelector(`[data-k="${c.k}"]`); if (el) el.style.display = c.si && !c.si(f) ? "none" : ""; });
+  const err = M.erreur(f);
+  $("#mErreur").textContent = err ? "⚠ " + err : "";
+  $("#mAjouter").disabled = !!err; $("#mAjouter").style.opacity = err ? .5 : 1;
+  const ap = $("#mApercu");
+  if (err){ ap.innerHTML = "?"; return; }
+  const v = M.construire(f);
+  ap.innerHTML = act.affiche ? act.affiche(v) : `<span class="grosNombre">${v}</span>`;
+}
+function fermerModele(){ $("#modele").classList.remove("ouvert"); }
+function ajouterModele(){
+  const M = MODELES[act.id], f = lireChamps();
+  if (M.erreur(f)) return;
+  const l = lireModeles(); l.push(f); ecrireModeles(l);
+  fermerModele(); remplirNombres(); placerNombre(act.nombres.length - 1);
+  const z = $("#nombres"); z.scrollLeft = z.scrollWidth;
 }
 
 function itemPalette(type, key, texte){
@@ -1272,6 +1423,10 @@ async function testerTous(){
 
 /* ===================== Démarrage ===================== */
 $("#zMoins").onclick = () => zoomer(1 / 1.2);
+$("#btnModele").onclick = ouvrirModele;
+$("#mAnnuler").onclick = fermerModele;
+$("#mAjouter").onclick = ajouterModele;
+$("#modele").addEventListener("pointerdown", e => { if (e.target.id === "modele") fermerModele(); });
 // bouton plein écran (masqué si le navigateur ne le permet pas, par exemple sur iPhone)
 {
   const el = document.documentElement, bp = $("#btnPlein");
