@@ -52,6 +52,7 @@ main{flex:1;display:flex;min-height:0}
 .block.out.revele .face{border-color:#fff;box-shadow:0 0 22px 6px rgba(255,255,255,.55)}
 .block.cond .face{flex-direction:column}
 .valcond{margin-top:5px;font-size:14px;font-weight:800;white-space:nowrap}
+.var.flash{animation:flashLigne .9s ease-out}
 .valcond.flash{animation:flashLigne .9s ease-out}
 .calc.flash{animation:flashLigne .9s ease-out}
 /* ce sont les lettres et les symboles qui clignotent en blanc (pas de fond) */
@@ -810,7 +811,7 @@ function etatInitial(){
 }
 function sauver(){
   // on n'enregistre pas les lumières du dernier test
-  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "valLigne", "valFlash", "bulle", "bulleNew"];
+  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "valLigne", "valFlash", "bulleFlash", "varFlash", "bulle", "bulleNew"];
   try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId }, (k, v) => tmp.includes(k) ? undefined : v)); } catch(e){}
 }
 function charger(){
@@ -939,7 +940,7 @@ function texteBloc(b){
     if (act.variables){
       const vars = act.variables.map(x => {
         const val = b.cur ? b.cur[x] : undefined;
-        return `<span class="var${val != null ? " change" : ""}">${x} = ${val != null ? val : "?"}</span>`;
+        return `<span class="var${val != null ? " change" : ""}${(b.varFlash || []).includes(x) ? " flash" : ""}">${x} = ${val != null ? val : "?"}</span>`;
       }).join("");
       return `${act.entree || "n ="} <span class="slot${i != null ? " plein" : ""}">${i != null ? aff(act.nombres[i]) : ""}</span>${vars}`;
     }
@@ -956,7 +957,7 @@ function texteBloc(b){
     if (!b.bulle) return t;
     // bulle à droite du bloc : les lignes du calcul, alignées sur le signe égal
     const lignes = b.bulle.map((l, k) => {
-      const m = /^(.*?)\s*= (.*)$/.exec(l), fl = k === b.bulleNew ? " flash" : "";
+      const m = /^(.*?)\s*= (.*)$/.exec(l), fl = k === b.bulleNew || (b.bulleFlash || []).includes(k) ? " flash" : "";
       return `<span class="calc${fl}">${m ? m[1] : ""}</span><span class="calc${fl}">=</span><span class="calc d${fl}">${m ? m[2] : l}</span>`;
     }).join("");
     return t + `<div class="bulle"><div class="egal">${lignes}</div></div>`;
@@ -1392,7 +1393,7 @@ function majEtats(){
   dessinerLiens();
 }
 function reinitLumieres(){
-  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; delete b.valLigne; delete b.valFlash; });
+  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; delete b.valLigne; delete b.valFlash; delete b.bulleFlash; delete b.varFlash; });
   links.forEach(l => delete l.lit);
 }
 
@@ -1478,9 +1479,19 @@ async function executer(i, vitesse, token){
       const c = act.conditions.find(c => c.key === cur.key), ligne = c && c.valeurs ? c.valeurs(v) : null;
       if (ligne){
         // la ligne avec les valeurs apparaît et clignote, puis le losange s'allume
-        cur.valLigne = ligne; cur.valFlash = true; majEtats();
+        cur.valLigne = ligne; cur.valFlash = true;
+        // les valeurs calculées plus tôt sur le chemin (bulles des actions, variables) qui apparaissent
+        // dans cette ligne clignotent en même temps
+        const membres = ligne.split(/\s[=≠<>≥≤]\s/).map(x => x.trim());
+        blocks.forEach(b => {
+          if (b.type === "act" && b.bulle){
+            b.bulleFlash = b.bulle.map((l, k) => { const m = /^(.*?)\s*= (.*)$/.exec(l); return m && membres.includes(m[2].trim()) ? k : -1; }).filter(k => k >= 0);
+          }
+        });
+        if (act.variables) start.varFlash = act.variables.filter(x => v && v[x] != null && membres.includes(fr(v[x])));
+        majEtats();
         await attendre(Math.max(700, vitesse * 1.4)); if (token !== runToken) return null;
-        delete cur.valFlash;
+        delete cur.valFlash; delete start.varFlash; blocks.forEach(b => delete b.bulleFlash);
       }
     }
     cur.lit = true; majEtats(); await attendre(delai(cur));
