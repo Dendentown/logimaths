@@ -375,7 +375,8 @@ const ACTIVITES = [
     attendu: n => (n % 3 === 0 ? "oui" : "non"),
     bilan: (n, e) => { const ch = [n]; while (ch[ch.length - 1] >= 10) ch.push(sommeChiffres(ch[ch.length - 1])); return ch.length > 1 ? `Sommes des chiffres : ${ch.join(" → ")}.` : ""; },
     // chemins : sans tour de boucle (q = 3, 6, 9 ou autre) puis avec des tours de boucle (q = 3, 6, 9 ou autre)
-    nombres: [3, 6, 9, 7, 12, 15, 99, 58]
+    // + chemins qui manquaient : 1 tour puis q = 9 (18) ou autre (22) ; 2 tours puis q = 3 (39) ou q = 6 (69)
+    nombres: [3, 6, 9, 7, 12, 15, 99, 58, 18, 22, 39, 69]
   },
   {
     id: "pythagore-longueur",
@@ -522,7 +523,8 @@ const ACTIVITES = [
         ? `${g}² = ${gg} et ${x}² + ${y}² = ${ss} : ${g}² ≠ ${x}² + ${y}², donc d'après la contraposée du théorème de Pythagore, ABC n'est pas rectangle.`
         : `${g}² = ${gg} et ${x}² + ${y}² = ${ss} : ${g}² = ${x}² + ${y}², donc d'après la réciproque du théorème de Pythagore, ABC est rectangle.`;
     },
-    nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [9, 6, 7]]
+    // + chemin qui manquait : AC plus grand côté, pas rectangle (5 ; 8 ; 6)
+    nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [9, 6, 7], [5, 8, 6]]
   },
   {
     id: "pythagore-rc",
@@ -571,7 +573,8 @@ const ACTIVITES = [
     attendu: n => (n % 7 === 0 ? "oui" : "non"),
     // affiché quand la machine a donné la bonne réponse : n = 7 × q + r
     bilan: (n, e) => e.r == null || e.q == null ? "" : `Division euclidienne : ${n} = 7 × ${e.q} + ${e.r}.`,
-    nombres: [21, 30, 49, 15, 63, 50, 6, 84]
+    // + chemin qui manquait : aucun tour de boucle et r = 0 (n = 0)
+    nombres: [21, 30, 49, 15, 63, 50, 6, 84, 0]
   }
 ];
 const aff = v => act.affiche ? act.affiche(v) : String(v);
