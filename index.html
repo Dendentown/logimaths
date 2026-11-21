@@ -45,6 +45,10 @@ main{flex:1;display:flex;min-height:0}
 .rac{display:inline-flex;align-items:stretch;white-space:nowrap;vertical-align:bottom;line-height:1.15}
 .rac>i{font-style:normal;font-size:1.12em;line-height:1.05;margin-right:-1px}
 .rac>span{display:inline-block;border-top:1.6px solid currentColor;padding:0 3px 0 2px;line-height:1.15;margin-top:1px}
+.egal{display:grid;grid-template-columns:auto auto auto;column-gap:6px;row-gap:4px;align-items:end}
+.egal .g{text-align:left}
+.egal .g:first-child,.egal .g:nth-child(3n+1){text-align:right}
+.egal .plein{grid-column:1 / 4;text-align:center}
 .calc{font-size:15px;font-weight:800}
 .slot.change{background:#3fc1a5 !important;color:#06241d !important}
 .pal.out::before{content:"■ ";color:var(--accent)}
@@ -530,7 +534,16 @@ function texteBloc(b){
   if (b.type === "act") return (act.actions || []).find(a => a.key === b.key)?.texte ?? "?";
   const t = act.sorties.find(s => s.key === b.key)?.texte ?? "?";
   // lignes de calcul ajoutées quand la machine arrive sur ce bloc de Fin
-  return b.extra ? `<div>${t}</div>` + b.extra.map(l => `<div class="calc">${l}</div>`).join("") : t;
+  if (!b.extra) return t;
+  // les lignes « a = … » sont alignées sur le signe égal (grille à 3 colonnes)
+  const ligne = (l, cls) => {
+    const m = /^(\S+) ([=≈]) ([\s\S]*)$/.exec(l);
+    return m ? `<span class="g ${cls}">${m[1]}</span><span class="g ${cls}">${m[2]}</span><span class="g d ${cls}">${m[3]}</span>`
+             : `<span class="g plein ${cls}">${l}</span>`;
+  };
+  const ok = l => /^\S+ [=≈] /.test(l);
+  return `<div class="egal">${ligne(t, "")}${b.extra.filter(ok).map(l => ligne(l, "calc")).join("")}</div>` +
+         b.extra.filter(l => !ok(l)).map(l => `<div class="calc">${l}</div>`).join("");
 }
 function ports(b){
   const d = DIM[b.type];
