@@ -444,13 +444,13 @@ const ACTIVITES = [
       { key: "absurde", texte: "C'est absurde" }
     ],
     attendu: t => attenduCotes(t),
-    // la bonne fin ne suffit pas : il faut avoir testé l'égalité du plus grand côté (sinon faux),
-    // et avoir fait les deux calculs avant ce test (sinon il manque une étape : orange)
+    // bonne fin : jamais en rouge. Si l'égalité du plus grand côté n'a pas été testée,
+    // ou si les deux calculs n'ont pas été faits avant ce test, il manque une étape (orange)
     valide: (t, e, fin) => {
       if (fin !== attenduCotes(t)) return false;
       const g = plusGrand(t), besoin = CALCULS_UTILES[g];
       const test = (e.tests || []).find(x => x.key === besoin.egal);
-      if (!test) return false;
+      if (!test) return "etape";
       if (!besoin.calc.every(k => test.calc.includes(k))) return "etape";
       return true;
     },
@@ -1232,7 +1232,7 @@ function texteResultat(i, r){
   if (r === "ko") return `✘ Pour ${n}, ta machine se trompe !`;
   if (r === "bloque") return `⚠ Pour ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
   if (r === "etape") return act.id === "pythagore-calculs"
-    ? `⚠ Pour ${n}, ta machine trouve la bonne réponse, mais il manque une étape dans le raisonnement : les calculs du carré du plus grand côté et de la somme des deux autres carrés, avant de tester l'égalité (en orange).`
+    ? `⚠ Pour ${n}, la réponse est juste, mais il manque une étape dans le raisonnement.`
     : `⚠ Pour ${n}, ta machine trouve la bonne réponse, mais il manque une étape dans le raisonnement : l'égalité qui isole a² (en orange).`;
   if (r === "sansvaleur") return `⚠ Pour ${n}, la machine utilise ${(act.variables || ["une variable"]).join(", ")} alors qu'elle n'a pas encore de valeur (bloc en orange) !`;
   if (r === "nodebut") return "⚠ Ta machine n'a pas de bloc Début : glisse-le depuis le menu.";
