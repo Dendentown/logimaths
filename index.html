@@ -294,14 +294,6 @@ function chargerActivite(i){
   act.conditions.forEach(c => pal.appendChild(itemPalette("cond", c.key, c.texte)));
   pal.insertAdjacentHTML("beforeend", "<h3>Fin</h3>");
   act.sorties.forEach(s => pal.appendChild(itemPalette("out", s.key, s.texte)));
-  pal.insertAdjacentHTML("beforeend",
-    `<div class="aide"><b>Comment faire ?</b><br>
-     • Glisse les blocs dans la zone (ou touche-les) : un Début, des conditions et les blocs de Fin.<br>
-     • Touche un <span style="color:var(--accent)">●</span> de sortie (en bas ou à droite), puis le <span style="color:var(--accent)">●</span> d'entrée d'un bloc (en haut) pour tracer une flèche.<br>
-     • Touche une flèche pour l'effacer.<br>
-     • Le × supprime un bloc.<br>
-     • Tu peux poser plusieurs fois une condition.<br>
-     • Le Début et chaque bloc de Fin ne se posent qu'une fois : plusieurs flèches peuvent arriver sur la même Fin.</div>`);
   const nb = $("#nombres"); nb.innerHTML = "";
   act.nombres.forEach((v, i) => {
     const b = document.createElement("button");
