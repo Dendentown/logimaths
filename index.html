@@ -225,6 +225,8 @@ const ACTIVITES = [
       { key: "nc", texte: "On ne peut pas conclure avec le théorème de Pythagore" }
     ],
     attendu: t => (t[0] === 90 ? "egal" : t[1] === 90 ? "egalB" : t[2] === 90 ? "egalC" : "nc"),
+    // mesures d'angles affichées sur certaines figures (index de la figure → sommets)
+    anglesAffiches: { 5: ["A"], 7: ["C"] },
     nombres: [[90, 30, 60], [40, 90, 50], [60, 60, 60], [90, 45, 45], [30, 60, 90], [100, 40, 40], [90, 20, 70], [50, 50, 80]]
   },
   {
@@ -277,6 +279,15 @@ function dessinTriangle(P, opts){
     const a = u(S[k1], V), b = u(S[k2], V), d = 9;
     svg += `<polyline points="${f(V[0]+a[0]*d)},${f(V[1]+a[1]*d)} ${f(V[0]+a[0]*d+b[0]*d)},${f(V[1]+a[1]*d+b[1]*d)} ${f(V[0]+b[0]*d)},${f(V[1]+b[1]*d)}" fill="none" stroke="currentColor" stroke-width="1.5"/>`;
   }
+  // mesures d'angles écrites sur la figure (arc + valeur)
+  (opts.angles || []).forEach(([k, txt]) => {
+    const V = S[k], [k1, k2] = "ABC".replace(k, "").split("");
+    const a = u(S[k1], V), b = u(S[k2], V), R = 11;
+    const sweep = a[0]*b[1] - a[1]*b[0] > 0 ? 1 : 0;
+    svg += `<path d="M${f(V[0]+a[0]*R)} ${f(V[1]+a[1]*R)} A${R} ${R} 0 0 ${sweep} ${f(V[0]+b[0]*R)} ${f(V[1]+b[1]*R)}" fill="none" stroke="currentColor" stroke-width="1.4"/>`;
+    const bi = u([a[0]+b[0], a[1]+b[1]], [0, 0]);
+    svg += `<text x="${f(V[0]+bi[0]*24)}" y="${f(V[1]+bi[1]*24)}" font-size="10" font-weight="600" fill="currentColor" text-anchor="middle" dominant-baseline="central">${txt}</text>`;
+  });
   // côtés de même longueur (petits traits)
   (opts.traits || []).forEach(([k1, k2]) => {
     const M = [(S[k1][0] + S[k2][0]) / 2, (S[k1][1] + S[k2][1]) / 2], t = u(S[k2], S[k1]), n = [-t[1], t[0]];
@@ -310,7 +321,8 @@ function figureAngles(t){
   if (t[0] === t[2]) traits.push(["B","C"], ["A","B"]);
   if (t[1] === t[2]) traits.push(["A","C"], ["A","B"]);
   const uniq = [...new Map(traits.map(p => [p.join(""), p])).values()];
-  return dessinTriangle(P, { rot: ROTATIONS[i % 8], droit, traits: uniq, numero: i + 1 });
+  const angles = ((act.anglesAffiches || {})[i] || []).map(k => [k, t["ABC".indexOf(k)] + "°"]);
+  return dessinTriangle(P, { rot: ROTATIONS[i % 8], droit, traits: uniq, angles, numero: i + 1 });
 }
 // activité 4 : triangle donné par ses longueurs [AB, AC, BC] → longueurs écrites sur la figure
 function figureCotes(t){
