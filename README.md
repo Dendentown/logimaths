@@ -14,7 +14,12 @@ Jeu de logique : l'élève construit une **machine de vérification** sous forme
 
 On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lancer la vérification** : les blocs traversés s'allument en **blanc**, et la sortie atteinte s'affiche en **vert** (bonne réponse) ou en **rouge** (mauvaise réponse).
 
-## Activité 3 — Réciproque et contraposée du théorème de Pythagore
+## Activité 3 — Théorème de Pythagore
+- On connaît les angles du triangle ABC. Entrée : `Â ; B̂ ; Ĉ = [   ]`
+- Conditions : « Le triangle ABC est rectangle en A », « Le triangle ABC est rectangle en B »
+- Fin : « BC² = AB² + AC² », « On ne peut pas conclure avec le théorème de Pythagore »
+
+## Activité 4 — Réciproque et contraposée du théorème de Pythagore
 - ABC est un triangle dont le plus grand côté est [BC]. Entrée : `AB ; AC ; BC = [   ]` (on glisse un triangle).
 - Condition : « BC² = AB² + AC² »
 - Sorties : « ABC est rectangle en A », « ABC n'est pas rectangle en A »

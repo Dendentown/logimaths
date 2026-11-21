@@ -59,7 +59,7 @@ svg#links path.hit:hover + path.vis{stroke:var(--ko)}
 .block.cond .face{inset:3px;background:var(--block);font-size:13.5px;line-height:1.25;padding:0 58px}
 /* sorties */
 .block.out{width:210px;height:68px}
-.block.out .face{background:var(--block);border:3px solid var(--blockb);border-radius:8px;font-size:15px;font-weight:600;padding:0 10px}
+.block.out .face{background:var(--block);border:3px solid var(--blockb);border-radius:8px;font-size:14px;line-height:1.2;font-weight:600;padding:0 10px}
 /* états */
 .block.lit .face{background:var(--lit);color:#111;box-shadow:0 0 22px 6px rgba(255,255,255,.55)}
 .block.cond.lit .bord{background:#fff}
@@ -199,8 +199,30 @@ const ACTIVITES = [
     nombres: [20, 35, 47, 5, 130, 58, 2025, 101]
   },
   {
+    id: "pythagore-direct",
+    titre: "Activité 3 — Théorème de Pythagore",
+    consigne: "On connaît les angles d'un triangle ABC. " +
+              "Construis une machine qui indique ce que le théorème de Pythagore permet de conclure sur BC². " +
+              "Glisse un triangle dans la case et lance la vérification.",
+    entree: "Â ; B̂ ; Ĉ =",
+    largeurDepart: 360,
+    // chaque valeur est un triangle donné par ses angles [Â, B̂, Ĉ] en degrés
+    affiche: t => t.map(a => a + "°").join(" ; "),
+    nomEntree: t => `Â = ${t[0]}°, B̂ = ${t[1]}°, Ĉ = ${t[2]}°`,
+    conditions: [
+      { key: "rectA", texte: "Le triangle ABC est rectangle en A", test: t => t[0] === 90 },
+      { key: "rectB", texte: "Le triangle ABC est rectangle en B", test: t => t[1] === 90 }
+    ],
+    sorties: [
+      { key: "egal", texte: "BC² = AB² + AC²" },
+      { key: "nc", texte: "On ne peut pas conclure avec le théorème de Pythagore" }
+    ],
+    attendu: t => (t[0] === 90 ? "egal" : "nc"),
+    nombres: [[90, 30, 60], [40, 90, 50], [60, 60, 60], [90, 45, 45], [30, 60, 90], [100, 40, 40], [90, 20, 70], [50, 50, 80]]
+  },
+  {
     id: "pythagore",
-    titre: "Activité 3 — Réciproque et contraposée du théorème de Pythagore",
+    titre: "Activité 4 — Réciproque et contraposée du théorème de Pythagore",
     consigne: "ABC est un triangle dont le plus grand côté est [BC] (longueurs en cm). " +
               "Construis une machine qui vérifie si le triangle ABC est rectangle en A. " +
               "Glisse un triangle dans la case et lance la vérification.",
