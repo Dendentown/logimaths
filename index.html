@@ -143,12 +143,12 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
 
 <footer>
   <div class="ligne">
-    <span class="lab">Glisse un nombre dans la case :</span>
+    <span class="lab" id="labNombres">Glisse un nombre dans la case :</span>
     <span id="nombres" class="ligne"></span>
   </div>
   <div class="ligne">
     <button class="btn main" id="btnLancer">▶ Lancer la vérification</button>
-    <button class="btn" id="btnTous">⏩ Tester tous les nombres</button>
+    <button class="btn" id="btnTous">⏩ Tout tester</button>
   </div>
   <div id="msg">Construis ta machine, glisse un nombre dans la case, puis lance la vérification.</div>
 </footer>
@@ -160,6 +160,9 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
 /* =====================================================================
    ACTIVITÉS — pour ajouter une activité, copier un objet de ce tableau.
    ===================================================================== */
+// écriture décimale française (virgule)
+const fr = x => String(x).replace(".", ",");
+
 const ACTIVITES = [
   {
     id: "multiple10",
@@ -192,11 +195,34 @@ const ACTIVITES = [
     // bonne réponse attendue pour un nombre n
     attendu: n => (n % 5 === 0 ? "oui" : "non"),
     nombres: [20, 35, 47, 5, 130, 58, 2025, 101]
+  },
+  {
+    id: "pythagore",
+    titre: "Activité 3 — Pythagore et sa contraposée",
+    consigne: "ABC est un triangle dont le plus grand côté est [BC] (longueurs en cm). " +
+              "Construis une machine qui vérifie si le triangle ABC est rectangle en A. " +
+              "Glisse un triangle dans la case et lance la vérification.",
+    entree: "AB ; AC ; BC =",
+    largeurDepart: 340,
+    // chaque valeur est un triangle [AB, AC, BC]
+    affiche: t => t.map(fr).join(" ; "),
+    nomEntree: t => `AB = ${fr(t[0])} cm, AC = ${fr(t[1])} cm, BC = ${fr(t[2])} cm`,
+    conditions: [
+      { key: "egal", texte: "BC² = AB² + AC²", test: t => Math.abs(t[0]*t[0] + t[1]*t[1] - t[2]*t[2]) < 1e-9 }
+    ],
+    sorties: [
+      { key: "rect", texte: "ABC est rectangle en A" },
+      { key: "nonrect", texte: "ABC n'est pas rectangle en A" }
+    ],
+    attendu: t => (Math.abs(t[0]*t[0] + t[1]*t[1] - t[2]*t[2]) < 1e-9 ? "rect" : "nonrect"),
+    nombres: [[3, 4, 5], [4, 5, 6], [6, 8, 10], [5, 6, 7.8], [5, 12, 13], [2, 3, 4], [4, 7.5, 8.5], [6, 7, 9]]
   }
 ];
+const aff = v => act.affiche ? act.affiche(v) : String(v);
+const nom = v => act.nomEntree ? act.nomEntree(v) : "n = " + v;
 
 /* ===================== Dimensions des blocs ===================== */
-const DIM = { start:{w:170,h:56}, cond:{w:240,h:150}, out:{w:210,h:68} };
+const DIM = { start:{w:190,h:60}, cond:{w:240,h:150}, out:{w:210,h:68} };
 const VITESSE = 550;
 
 /* ===================== État ===================== */
@@ -248,12 +274,14 @@ function chargerActivite(i){
      • Tu peux poser plusieurs fois une condition.<br>
      • Chaque sortie ne se pose qu'une fois : plusieurs flèches peuvent arriver sur la même sortie.</div>`);
   const nb = $("#nombres"); nb.innerHTML = "";
-  act.nombres.forEach(n => {
+  act.nombres.forEach((v, i) => {
     const b = document.createElement("button");
-    b.className = "num"; b.textContent = n; b.dataset.n = n;
-    b.addEventListener("pointerdown", e => dragNombre(e, n));
+    b.className = "num"; b.textContent = aff(v); b.dataset.n = i;
+    b.addEventListener("pointerdown", e => dragNombre(e, i));
     nb.appendChild(b);
   });
+  DIM.start.w = act.largeurDepart || 190;
+  $("#labNombres").textContent = act.affiche ? "Glisse un triangle dans la case :" : "Glisse un nombre dans la case :";
   nCourant = null; charger(); rendu(); effacerEtats();
 }
 
@@ -268,7 +296,7 @@ function itemPalette(type, key, texte){
 
 /* ===================== Rendu ===================== */
 function texteBloc(b){
-  if (b.type === "start"){ const v = b.val ?? nCourant; return `n = <span class="slot${v != null ? " plein" : ""}">${v ?? ""}</span>`; }
+  if (b.type === "start"){ const i = b.val ?? nCourant; return `${act.entree || "n ="} <span class="slot${i != null ? " plein" : ""}">${i != null ? aff(act.nombres[i]) : ""}</span>`; }
   if (b.type === "cond") return act.conditions.find(c => c.key === b.key)?.texte ?? "?";
   return act.sorties.find(s => s.key === b.key)?.texte ?? "?";
 }
@@ -291,6 +319,7 @@ function rendu(){
     const el = document.createElement("div");
     el.className = "block " + b.type; el.dataset.id = b.id;
     el.style.left = b.x + "px"; el.style.top = b.y + "px";
+    if (b.type === "start") el.style.width = d.w + "px";
     el.innerHTML = (b.type === "cond" ? '<div class="bord"></div>' : "") +
                    `<div class="face">${texteBloc(b)}</div>`;
     ports(b).forEach(p => {
@@ -501,7 +530,7 @@ ws.addEventListener("pointerdown", e => {
 
 function dragNombre(e, n){
   e.preventDefault(); stopRun();
-  const g = $("#ghost"); g.textContent = n;
+  const g = $("#ghost"); g.textContent = aff(act.nombres[n]);
   const x0 = e.clientX, y0 = e.clientY; let bouge = false;
   const dansCase = ev => {
     const s = ws.querySelector(".block.start"); if (!s) return false;
@@ -526,10 +555,10 @@ function dragNombre(e, n){
 function placerNombre(n){
   nCourant = n; effacerEtats();
   document.querySelectorAll(".num").forEach(b => b.classList.toggle("cur", b.dataset.n == n));
-  msg(`n = ${n}. Clique sur « Lancer la vérification ».`, "");
+  msg(`${nom(act.nombres[n])}. Clique sur « Lancer la vérification ».`, "");
 }
 function lancer(){
-  if (nCourant == null){ msg("⚠ Glisse d'abord un nombre dans la case « n = ».", "warn"); return; }
+  if (nCourant == null){ msg("⚠ Glisse d'abord une valeur dans la case jaune.", "warn"); return; }
   testerUn(nCourant);
 }
 
@@ -589,10 +618,11 @@ function reinitLumieres(){
 }
 
 // Fait passer n dans la machine. Renvoie "ok", "ko", "bloque" ou "boucle".
-async function executer(n, vitesse, token){
+async function executer(i, vitesse, token){
   reinitLumieres();
+  const n = act.nombres[i];
   const start = blocks.find(b => b.type === "start");
-  start.val = n;
+  start.val = i;
   let cur = start, pas = 0;
   cur.lit = true; majEtats(); await attendre(vitesse);
   while (true){
@@ -619,17 +649,18 @@ async function executer(n, vitesse, token){
   }
 }
 
-function texteResultat(n, r){
-  if (r === "ok") return `✔ Pour n = ${n}, ta machine donne la bonne réponse.`;
-  if (r === "ko") return `✘ Pour n = ${n}, ta machine se trompe !`;
-  if (r === "bloque") return `⚠ Pour n = ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
-  return `⚠ Pour n = ${n}, la machine tourne en rond !`;
+function texteResultat(i, r){
+  const n = nom(act.nombres[i]);
+  if (r === "ok") return `✔ Pour ${n}, ta machine donne la bonne réponse.`;
+  if (r === "ko") return `✘ Pour ${n}, ta machine se trompe !`;
+  if (r === "bloque") return `⚠ Pour ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
+  return `⚠ Pour ${n}, la machine tourne en rond !`;
 }
 
 async function testerUn(n){
   stopRun(); const token = runToken;
   document.querySelectorAll(".num").forEach(b => b.classList.toggle("cur", b.dataset.n == n));
-  msg(`La machine teste n = ${n}…`, "");
+  msg(`La machine teste ${nom(act.nombres[n])}…`, "");
   const r = await executer(n, VITESSE, token);
   if (r === null) return;
   const btn = document.querySelector(`.num[data-n="${n}"]`);
@@ -641,10 +672,10 @@ async function testerTous(){
   stopRun(); const token = runToken;
   document.querySelectorAll(".num").forEach(b => b.classList.remove("ok","ko","cur"));
   let erreurs = 0;
-  for (const n of act.nombres){
+  for (let n = 0; n < act.nombres.length; n++){
     const btn = document.querySelector(`.num[data-n="${n}"]`);
     document.querySelectorAll(".num").forEach(b => b.classList.remove("cur")); btn.classList.add("cur");
-    msg(`La machine teste n = ${n}…`, "");
+    msg(`La machine teste ${nom(act.nombres[n])}…`, "");
     const r = await executer(n, 280, token);
     if (r === null) return;
     btn.classList.add(r === "ok" ? "ok" : "ko");
@@ -654,11 +685,11 @@ async function testerTous(){
   }
   document.querySelectorAll(".num").forEach(b => b.classList.remove("cur"));
   if (erreurs === 0){
-    msg("✔ Ta machine donne la bonne réponse pour tous les nombres !", "ok");
-    $("#bravoTxt").textContent = "Ta machine de vérification fonctionne pour tous les nombres testés.";
+    msg("✔ Ta machine donne la bonne réponse pour toutes les valeurs !", "ok");
+    $("#bravoTxt").textContent = "Ta machine de vérification fonctionne pour toutes les valeurs testées.";
     $("#bravo").style.display = "flex";
   } else {
-    msg(`✘ Ta machine se trompe pour ${erreurs} nombre${erreurs > 1 ? "s" : ""} (en rouge). Clique dessus pour voir le chemin.`, "ko");
+    msg(`✘ Ta machine se trompe pour ${erreurs} valeur${erreurs > 1 ? "s" : ""} (en rouge). Glisse-la dans la case et lance la vérification pour voir le chemin.`, "ko");
   }
 }
 
