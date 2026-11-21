@@ -68,6 +68,8 @@ svg#links path.hit:hover + path.vis{stroke:var(--ko)}
 .port:hover{transform:scale(1.15)}
 .port.sel{animation:pulse .8s infinite alternate;background:#fff}
 .port.used{background:#9fb2ea}
+#tmpG path{fill:none;stroke:var(--accent);stroke-width:3;stroke-dasharray:9 6}
+.port.in.vise{transform:scale(1.45);background:#fff;box-shadow:0 0 12px 4px rgba(255,201,77,.9)}
 body.cible .port.in{box-shadow:0 0 0 4px rgba(255,201,77,.45)}
 @keyframes pulse{from{box-shadow:0 0 0 0 rgba(255,201,77,.9)}to{box-shadow:0 0 0 10px rgba(255,201,77,0)}}
 .plabel{position:absolute;font-size:12px;font-weight:800;color:var(--muted);pointer-events:none;transition:color .2s}
@@ -122,9 +124,11 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
       <svg id="links" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <marker id="fl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6f83bd"/></marker>
+          <marker id="flTmp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#ffc94d"/></marker>
           <marker id="flLit" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fff"/></marker>
         </defs>
         <g id="linksG"></g>
+        <g id="tmpG"></g>
       </svg>
     </div>
   </div>
@@ -191,7 +195,8 @@ const VITESSE = 550;
 /* ===================== État ===================== */
 let nCourant = null, act, blocks, links, nextId, selPort = null, runToken = 0;
 const $ = s => document.querySelector(s);
-const ws = $("#ws"), zone = $("#zone"), linksG = $("#linksG");
+const ws = $("#ws"), zone = $("#zone"), linksG = $("#linksG"), tmpG = $("#tmpG");
+let pointeur = null;
 
 function etatInitial(){
   blocks = [{ id: 1, type: "start", x: 60, y: 30 }];
@@ -267,6 +272,7 @@ function ports(b){
 }
 
 function rendu(){
+  if (!selPort || selPort.port === "in") pointeur = null;
   document.body.classList.toggle("cible", !!(selPort && selPort.port !== "in"));
   document.querySelectorAll(".pal.out").forEach(p =>
     p.classList.toggle("pris", blocks.some(b => b.type === "out" && b.key === p.dataset.key)));
@@ -284,7 +290,7 @@ function rendu(){
       pe.style.left = (p.x - 12) + "px"; pe.style.top = (p.y - 12) + "px";
       if (links.some(l => l.from === b.id && l.port === p.name)) pe.classList.add("used");
       if (selPort && selPort.id === b.id && selPort.port === p.name) pe.classList.add("sel");
-      pe.addEventListener("pointerdown", e => { e.stopPropagation(); clicPort(b.id, p.name); });
+      pe.addEventListener("pointerdown", e => { e.stopPropagation(); clicPort(b.id, p.name); debutFleche(e, b.id, p.name); });
       el.appendChild(pe);
       if (p.label){
         const lb = document.createElement("div");
@@ -312,7 +318,7 @@ function rendu(){
     el.addEventListener("pointerdown", e => dragBloc(e, b, el));
     ws.appendChild(el);
   });
-  dessinerLiens();
+  dessinerLiens(); dessinerTmp();
 }
 
 function dessinerLiens(){
@@ -424,9 +430,61 @@ function dragPalette(e, type, key, texte){
   window.addEventListener("pointermove", move); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
 }
 
+/* ---- flèche qui suit la souris ---- */
+function cibleProche(p){
+  if (!selPort) return null;
+  let best = null, dmin = 38;
+  blocks.forEach(b => {
+    if (b.type === "start" || b.id === selPort.id) return;
+    const d = Math.hypot(p.x - (b.x + DIM[b.type].w/2), p.y - b.y);
+    if (d < dmin){ dmin = d; best = b; }
+  });
+  return best;
+}
+function dessinerTmp(){
+  tmpG.innerHTML = "";
+  ws.querySelectorAll(".port.in.vise").forEach(x => x.classList.remove("vise"));
+  if (!selPort || selPort.port === "in" || !pointeur) return;
+  const a = blocks.find(b => b.id === selPort.id); if (!a) return;
+  const p = ports(a).find(q => q.name === selPort.port);
+  const x1 = a.x + p.x, y1 = a.y + p.y;
+  let x2 = pointeur.x, y2 = pointeur.y, c2x = x2, c2y = y2;
+  const c = cibleProche(pointeur);
+  const k = Math.max(40, Math.min(130, Math.hypot(x2 - x1, y2 - y1) / 2));
+  if (c){
+    x2 = c.x + DIM[c.type].w/2; y2 = c.y - 13; c2x = x2; c2y = y2 - k;
+    ws.querySelector(`.block[data-id="${c.id}"] .port.in`)?.classList.add("vise");
+  }
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", `M${x1} ${y1} C${x1 + p.dir[0]*k} ${y1 + p.dir[1]*k}, ${c2x} ${c2y}, ${x2} ${y2}`);
+  path.setAttribute("marker-end", "url(#flTmp)");
+  tmpG.appendChild(path);
+}
+window.addEventListener("pointermove", e => {
+  if (selPort && selPort.port !== "in"){ pointeur = coordWs(e); dessinerTmp(); }
+});
+// glisser depuis un point de sortie et relâcher sur un point d'entrée (ou un bloc)
+function debutFleche(e, id, port){
+  if (!selPort || selPort.id !== id || selPort.port !== port) return;
+  pointeur = coordWs(e); dessinerTmp();
+  const x0 = e.clientX, y0 = e.clientY;
+  const up = ev => {
+    window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up);
+    if (Math.hypot(ev.clientX - x0, ev.clientY - y0) < 8) return; // simple clic : la flèche suit la souris
+    const c = cibleProche(coordWs(ev));
+    const sous = document.elementFromPoint(ev.clientX, ev.clientY)?.closest(".block");
+    const cible = c ? c.id : (sous ? +sous.dataset.id : null);
+    if (cible != null && cible !== id && blocks.find(b => b.id === cible).type !== "start") relier(cible);
+    else { selPort = null; rendu(); msg("", ""); }
+  };
+  window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
+}
+
 ws.addEventListener("pointerdown", e => {
   if (e.target === ws || e.target.closest("svg") && !e.target.classList.contains("hit")){
     ws.querySelectorAll(".block.touch").forEach(x => x.classList.remove("touch"));
+    const c = selPort && selPort.port !== "in" ? cibleProche(coordWs(e)) : null;
+    if (c){ relier(c.id); return; }
     if (selPort){ selPort = null; rendu(); msg("", ""); }
   }
 });
