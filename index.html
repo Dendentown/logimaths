@@ -53,6 +53,8 @@ main{flex:1;display:flex;min-height:0}
 /* ce sont les lettres et les symboles qui clignotent en blanc (pas de fond) */
 @keyframes flashLigne{0%{opacity:0;color:#fff;text-shadow:0 0 6px #fff,0 0 12px #fff}20%{opacity:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #fff}40%{opacity:.25}60%{opacity:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #fff}100%{opacity:1;text-shadow:none}}
 .block.abulle{z-index:8}
+.block.act.clignote .face{animation:clignoteBloc 1s ease-in-out}
+@keyframes clignoteBloc{0%,50%,100%{}25%,75%{background:#fff;color:#111;box-shadow:0 0 22px 6px rgba(255,255,255,.6)}}
 .bulle{position:absolute;left:calc(100% + 16px);top:50%;transform:translateY(-50%);background:#101a36;border:2px solid #3fc1a5;border-radius:10px;padding:6px 12px;white-space:nowrap;z-index:5;font-weight:700;color:var(--txt);pointer-events:none}
 .bulle .egal{align-items:center}
 .bulle .calc{font-size:15px}
@@ -419,9 +421,10 @@ const ACTIVITES = [
       { key: "gAB", texte: "AB est le plus grand côté", test: e => plusGrand(e.t) === "AB" },
       { key: "gAC", texte: "AC est le plus grand côté", test: e => plusGrand(e.t) === "AC" },
       { key: "gBC", texte: "BC est le plus grand côté", test: e => plusGrand(e.t) === "BC" },
-      { key: "egalA", texte: "BC² = AB² + AC²", test: e => egalite(e.t[2], e.t[0], e.t[1]) },
-      { key: "egalB", texte: "AC² = AB² + BC²", test: e => egalite(e.t[1], e.t[0], e.t[2]) },
-      { key: "egalC", texte: "AB² = AC² + BC²", test: e => egalite(e.t[0], e.t[1], e.t[2]) }
+      // « lie » : blocs de calcul qui clignotent quand on teste cette égalité
+      { key: "egalA", texte: "BC² = AB² + AC²", test: e => egalite(e.t[2], e.t[0], e.t[1]), lie: ["cBC", "sABAC"] },
+      { key: "egalB", texte: "AC² = AB² + BC²", test: e => egalite(e.t[1], e.t[0], e.t[2]), lie: ["cAC", "sABBC"] },
+      { key: "egalC", texte: "AB² = AC² + BC²", test: e => egalite(e.t[0], e.t[1], e.t[2]), lie: ["cAB", "sACBC"] }
     ],
     // blocs de calcul : le détail s'affiche à côté du bloc, ligne par ligne
     actions: [
@@ -1100,6 +1103,15 @@ function apresModif(){ sauver(); rendu(); effacerEtats(); }
 /* ===================== Exécution de la machine ===================== */
 const attendre = ms => new Promise(r => setTimeout(r, ms));
 function stopRun(){ runToken++; }
+// fait clignoter en blanc les blocs Action indiqués (même hors du chemin), sans les laisser allumés
+function clignoterBlocs(keys){
+  ws.querySelectorAll(".block.act").forEach(el => {
+    const b = blocks.find(x => x.id == el.dataset.id);
+    if (!b || !keys.includes(b.key)) return;
+    el.classList.remove("clignote"); void el.offsetWidth; el.classList.add("clignote");
+    setTimeout(() => el.classList.remove("clignote"), 1100);
+  });
+}
 function msg(t, cls){ const m = $("#msg"); m.innerHTML = t; m.className = cls || ""; }
 
 // efface le chemin blanc et les couleurs (appelé dès que le logigramme change)
@@ -1196,6 +1208,7 @@ async function executer(i, vitesse, token){
       const c = act.conditions.find(c => c.key === cur.key);
       const res = c.test(v);
       if (res == null){ cur.stuck = true; majEtats(); return "sansvaleur"; }
+      if (c.lie){ clignoterBlocs(c.lie); await attendre(Math.max(500, vitesse)); if (token !== runToken) return null; }
       if (act.suiviTests) v = { ...v, tests: [...(v.tests || []), { key: c.key, calc: [...(v.calc || [])] }] };
       port = res ? "oui" : "non";
       cur.portLit = port; majEtats(); await attendre(delai(cur)/2);
