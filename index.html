@@ -211,7 +211,7 @@ const ACTIVITES = [
     conditions: [
       { key: "rectA", texte: "Le triangle ABC est rectangle en A", test: t => t[0] === 90 },
       { key: "rectB", texte: "Le triangle ABC est rectangle en B", test: t => t[1] === 90 },
-      { key: "pasRectC", texte: "Le triangle ABC n'est pas rectangle en C", test: t => t[2] !== 90 }
+      { key: "rectC", texte: "Le triangle ABC est rectangle en C", test: t => t[2] === 90 }
     ],
     sorties: [
       { key: "egal", texte: "BC² = AB² + AC²" },
