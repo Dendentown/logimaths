@@ -224,6 +224,7 @@ footer > .ligne:first-child{min-width:0;max-width:100%}
 #modele .corps{display:flex;gap:20px;flex-wrap:wrap;align-items:center}
 #mChamps{flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px}
 #mChamps label{display:flex;align-items:center;gap:8px;font-size:15px;justify-content:space-between}
+#mChamps label > span{white-space:nowrap}
 #mChamps input[type=number],#mChamps select{width:110px;font:inherit;font-size:16px;padding:6px 8px;border-radius:8px;border:2px solid var(--blockb);background:var(--block);color:var(--txt)}
 #mChamps .cases{display:flex;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 #mChamps .cases label{justify-content:flex-start;gap:4px}
@@ -599,17 +600,18 @@ const MODELES = {
   "multiple3": MODELE_NOMBRE(1000000000),
   "pythagore-longueur": {
     champs: [...COTES(["b", "c"], [5, 12]),
-      { k: "hyp", label: "Hypoténuse", type: "select", choix: [["a", "a"], ["b", "b"], ["c", "c"], ["", "aucune (pas rectangle)"]], def: "a" },
-      { k: "aDessin", label: "a = (pour le dessin)", type: "number", min: 0.1, step: 0.1, def: 6, unite: "cm", si: f => !f.hyp }],
-    construire: f => ({ b: nb(f.b), c: nb(f.c), hyp: f.hyp || null, aDessin: nb(f.aDessin) }),
+      { k: "rect", label: "Le triangle est rectangle", type: "select", choix: [["oui", "Oui"], ["non", "Non"]], def: "oui" },
+      { k: "hyp", label: "Hypoténuse", type: "select", choix: [["a", "a"], ["b", "b"], ["c", "c"]], def: "a", si: f => f.rect !== "non" },
+      { k: "aDessin", label: "a = (pour dessiner le triangle)", type: "number", min: 0.1, step: 0.1, def: 9, unite: "cm", si: f => f.rect === "non" }],
+    construire: f => ({ b: nb(f.b), c: nb(f.c), hyp: f.rect === "non" || !f.hyp ? null : f.hyp, aDessin: nb(f.aDessin) }),
     erreur: f => {
-      const b = nb(f.b), c = nb(f.c);
+      const b = nb(f.b), c = nb(f.c), rect = f.rect !== "non" && !!f.hyp;
       if (!(b > 0 && c > 0)) return "Les longueurs b et c doivent être positives.";
-      if (f.hyp === "c" && !(c > b)) return "Si c est l'hypoténuse, c doit être plus grand que b.";
-      if (f.hyp === "b" && !(b > c)) return "Si b est l'hypoténuse, b doit être plus grand que c.";
-      if (!f.hyp){
+      if (rect && f.hyp === "c" && !(c > b)) return "Si c est l'hypoténuse, c doit être plus grand que b.";
+      if (rect && f.hyp === "b" && !(b > c)) return "Si b est l'hypoténuse, b doit être plus grand que c.";
+      if (!rect){
         const a = nb(f.aDessin), e = erreurTriangle(a, b, c); if (e) return e;
-        if (egalite(a, b, c) || egalite(b, a, c) || egalite(c, a, b)) return "Avec ces longueurs, le triangle est rectangle : choisis son hypoténuse.";
+        if (egalite(a, b, c) || egalite(b, a, c) || egalite(c, a, b)) return "Avec ces longueurs, le triangle est rectangle : choisis « Oui » et son hypoténuse.";
       }
       return null;
     }
