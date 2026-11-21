@@ -32,7 +32,7 @@ main{flex:1;display:flex;min-height:0}
 .pal.cond .bord{inset:0;background:#7a8fd6;transition:background .15s}
 .pal.cond .face{inset:2px;background:var(--block);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 44px;font-size:12px;line-height:1.2}
 .pal.cond:hover .bord{background:var(--accent)}
-.pal.start{border-color:var(--accent);border-radius:22px;text-align:center;font-family:ui-monospace,Consolas,monospace;font-weight:700;font-size:15px}
+.pal.start{border-color:var(--accent);border-radius:999px;text-align:center;font-family:ui-monospace,Consolas,monospace;font-weight:700;font-size:15px}
 .minislot{display:inline-block;width:34px;height:18px;border:2px dashed var(--accent);border-radius:4px;vertical-align:middle}
 .block.act{width:220px;height:62px}
 .block.act .face{background:var(--block);border:3px solid #3fc1a5;border-radius:4px;font-size:15px;font-weight:700;padding:0 10px}
@@ -41,7 +41,7 @@ main{flex:1;display:flex;min-height:0}
 .var{display:inline-block;margin-left:14px;padding:2px 8px;border-radius:6px;border:2px solid #3fc1a5;font-size:17px;color:#3fc1a5}
 .var.change{background:#3fc1a5;color:#06241d}
 .block.out.calcul{height:auto !important;min-height:68px}
-.block.out.calcul .face{position:relative;flex-direction:column;gap:3px;padding:8px 12px}
+.block.out.calcul .face{position:relative;flex-direction:column;gap:3px;padding:12px 34px}
 .rac{display:inline-flex;align-items:stretch;white-space:nowrap;vertical-align:bottom;line-height:1.15}
 .rac>i{font-style:normal;font-size:1.12em;line-height:1.05;margin-right:-1px}
 .rac>span{display:inline-block;border-top:1.6px solid currentColor;padding:0 3px 0 2px;line-height:1.15;margin-top:1px}
@@ -53,6 +53,7 @@ main{flex:1;display:flex;min-height:0}
 @keyframes flashLigne{0%{background:#fff;color:#111;box-shadow:0 0 14px 4px rgba(255,255,255,.9)}60%{background:#fff;color:#111}100%{background:transparent;box-shadow:none}}
 .calc{font-size:15px;font-weight:800}
 .slot.change{background:#3fc1a5 !important;color:#06241d !important}
+.pal.out{border-radius:999px;padding-left:16px;padding-right:16px}
 .pal.out::before{content:"■ ";color:var(--accent)}
 .pal:hover{border-color:var(--accent)}
 .pal.pris{opacity:.35;cursor:not-allowed;border-style:dashed}
@@ -74,15 +75,15 @@ svg#links path.hit:hover + path.vis{stroke:var(--ko)}
 .block .face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;transition:background .25s,color .25s,box-shadow .25s,border-color .25s}
 /* départ */
 .block.start{width:190px;height:60px}
-.block.start .face{background:#2d3f73;border:3px solid var(--accent);border-radius:30px;font-size:20px;font-weight:700;font-family:ui-monospace,Consolas,monospace}
+.block.start .face{background:#2d3f73;border:3px solid var(--accent);border-radius:999px;padding:0 28px;font-size:20px;font-weight:700;font-family:ui-monospace,Consolas,monospace}
 /* condition (losange) */
 .block.cond{width:240px;height:150px}
 .block.cond .bord,.block.cond .face{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .block.cond .bord{position:absolute;inset:0;background:#7a8fd6;transition:background .25s}
 .block.cond .face{inset:3px;background:var(--block);font-size:13.5px;line-height:1.25;padding:0 58px}
 /* sorties */
-.block.out{width:210px;height:68px}
-.block.out .face{background:var(--block);border:3px solid var(--blockb);border-radius:8px;font-size:14px;line-height:1.2;font-weight:600;padding:0 10px}
+.block.out{width:240px;height:68px}
+.block.out .face{background:var(--block);border:3px solid var(--blockb);border-radius:999px;font-size:14px;line-height:1.2;font-weight:600;padding:0 30px}
 /* états */
 .block.lit .face{background:var(--lit);color:#111;box-shadow:0 0 22px 6px rgba(255,255,255,.55)}
 .block.cond.lit .bord{background:#fff}
@@ -110,6 +111,7 @@ body.cible .port.in{box-shadow:0 0 0 4px rgba(255,201,77,.45)}
 .block.cond.choisi .bord{background:#ff6b6b}
 .block.cond.choisi .face{outline:none;inset:5px}
 .block.cond .del{top:10px;right:42px}
+.block.out .del,.block.start .del{top:-8px;right:18px}
 #ghost{position:fixed;pointer-events:none;z-index:50;opacity:.85;display:none;background:var(--block);border:2px dashed var(--accent);border-radius:10px;padding:8px 10px;font-size:13px;max-width:220px}
 footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16px;display:flex;flex-direction:column;gap:8px}
 .ligne{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -346,7 +348,7 @@ const ACTIVITES = [
     consigne: "On connaît les angles d'un triangle ABC. " +
               "Construis une machine qui indique ce que le théorème de Pythagore permet de conclure.",
     entree: "Triangle ABC :",
-    largeurDepart: 380, hauteurDepart: 132,
+    largeurDepart: 420, hauteurDepart: 132,
     // chaque valeur est un triangle donné par ses angles [Â, B̂, Ĉ] en degrés
     affiche: t => figureAngles(t),
     nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
@@ -372,7 +374,7 @@ const ACTIVITES = [
     consigne: "On connaît les longueurs des côtés d'un triangle ABC (en cm). " +
               "Construis une machine qui indique ce que la réciproque et la contraposée du théorème de Pythagore permettent de conclure.",
     entree: "Triangle ABC :",
-    largeurDepart: 380, hauteurDepart: 132,
+    largeurDepart: 420, hauteurDepart: 132,
     // chaque valeur est un triangle [AB, AC, BC]
     affiche: t => figureCotes(t),
     nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
@@ -511,7 +513,7 @@ const nom = v => act.nomEntree ? act.nomEntree(v) : "n = " + v;
 const Nom = v => { const t = nom(v); return t.charAt(0).toUpperCase() + t.slice(1); };
 
 /* ===================== Dimensions des blocs ===================== */
-const DIM = { act:{w:220,h:62}, start:{w:190,h:60}, cond:{w:240,h:150}, out:{w:210,h:68} };
+const DIM = { act:{w:220,h:62}, start:{w:190,h:60}, cond:{w:240,h:150}, out:{w:240,h:68} };
 const VITESSE = 550;
 
 /* ===================== État ===================== */
