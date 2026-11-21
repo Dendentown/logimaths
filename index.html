@@ -53,6 +53,8 @@ main{flex:1;display:flex;min-height:0}
 .block.cond .face{flex-direction:column}
 .valcond{margin-top:5px;font-size:14px;font-weight:800;white-space:nowrap}
 .var.flash{animation:flashLigne .9s ease-out}
+svg .angledroit.clignote{animation:clignoteAngle .9s ease-in-out;stroke-width:3.5}
+@keyframes clignoteAngle{0%,50%,100%{opacity:1}25%,75%{opacity:.05}}
 .valcond.flash{animation:flashLigne .9s ease-out}
 .calc.flash{animation:flashLigne .9s ease-out}
 /* ce sont les lettres et les symboles qui clignotent en blanc (pas de fond) */
@@ -517,7 +519,7 @@ const ACTIVITES = [
     nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
     etatInitial: t => ({ t }),
     conditions: [
-      { key: "rect", texte: "Le triangle est rectangle", test: e => e.t.hyp != null },
+      { key: "rect", texte: "Le triangle est rectangle", test: e => e.t.hyp != null, figure: true },
       { key: "ahyp", texte: "a est l'hypoténuse", test: e => e.t.hyp === "a" },
       { key: "chyp", texte: "c est l'hypoténuse", test: e => e.t.hyp === "c" },
       { key: "bhyp", texte: "b est l'hypoténuse", test: e => e.t.hyp === "b" }
@@ -581,9 +583,9 @@ const ACTIVITES = [
     affiche: t => figureAngles(t),
     nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
     conditions: [
-      { key: "rectA", texte: "Le triangle ABC est rectangle en A", test: t => t[0] === 90 },
-      { key: "rectB", texte: "Le triangle ABC est rectangle en B", test: t => t[1] === 90 },
-      { key: "rectC", texte: "Le triangle ABC est rectangle en C", test: t => t[2] === 90 }
+      { key: "rectA", texte: "Le triangle ABC est rectangle en A", test: t => t[0] === 90, figure: true },
+      { key: "rectB", texte: "Le triangle ABC est rectangle en B", test: t => t[1] === 90, figure: true },
+      { key: "rectC", texte: "Le triangle ABC est rectangle en C", test: t => t[2] === 90, figure: true }
     ],
     sorties: [
       { key: "egal", texte: "BC² = AB² + AC²" },
@@ -725,7 +727,7 @@ function dessinTriangle(P, opts){
   if (opts.droit){
     const V = S[opts.droit], [k1, k2] = "ABC".replace(opts.droit, "").split("");
     const a = u(S[k1], V), b = u(S[k2], V), d = 9;
-    svg += `<polyline points="${f(V[0]+a[0]*d)},${f(V[1]+a[1]*d)} ${f(V[0]+a[0]*d+b[0]*d)},${f(V[1]+a[1]*d+b[1]*d)} ${f(V[0]+b[0]*d)},${f(V[1]+b[1]*d)}" fill="none" stroke="currentColor" stroke-width="1.5"/>`;
+    svg += `<polyline points="${f(V[0]+a[0]*d)},${f(V[1]+a[1]*d)} ${f(V[0]+a[0]*d+b[0]*d)},${f(V[1]+a[1]*d+b[1]*d)} ${f(V[0]+b[0]*d)},${f(V[1]+b[1]*d)}" class="angledroit" fill="none" stroke="currentColor" stroke-width="1.5"/>`;
   }
   // mesures d'angles écrites sur la figure (arc + valeur)
   (opts.angles || []).forEach(([k, txt]) => {
@@ -811,7 +813,7 @@ function etatInitial(){
 }
 function sauver(){
   // on n'enregistre pas les lumières du dernier test
-  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "valLigne", "valFlash", "bulleFlash", "varFlash", "bulle", "bulleNew"];
+  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "valLigne", "valFlash", "bulleFlash", "varFlash", "figFlash", "bulle", "bulleNew"];
   try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId }, (k, v) => tmp.includes(k) ? undefined : v)); } catch(e){}
 }
 function charger(){
@@ -1385,6 +1387,7 @@ function majEtats(){
     el.classList.toggle("etape", b.res === "etape");
     el.classList.toggle("stuck", !!b.stuck);
     if (b.type === "start" || b.type === "out" || b.type === "act" || b.type === "cond") el.querySelector(".face").innerHTML = texteBloc(b);
+    if (b.type === "start" && b.figFlash) el.querySelectorAll(".angledroit").forEach(x => x.classList.add("clignote"));
     if (b.type === "out") el.classList.toggle("calcul", !!b.extra);
     // un bloc qui affiche ses calculs passe devant tous les autres blocs
     el.classList.toggle("abulle", !!b.bulle);
@@ -1393,7 +1396,7 @@ function majEtats(){
   dessinerLiens();
 }
 function reinitLumieres(){
-  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; delete b.valLigne; delete b.valFlash; delete b.bulleFlash; delete b.varFlash; });
+  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; delete b.valLigne; delete b.valFlash; delete b.bulleFlash; delete b.varFlash; delete b.figFlash; });
   links.forEach(l => delete l.lit);
 }
 
@@ -1475,6 +1478,15 @@ async function executer(i, vitesse, token){
     l.lit = true; majEtats(); await attendre(delai(cur)/2);
     if (token !== runToken) return null;
     cur = blocks.find(b => b.id === l.to);
+    if (cur.type === "cond"){
+      const c0 = act.conditions.find(c => c.key === cur.key);
+      if (c0 && c0.figure){
+        // condition « triangle rectangle » : l'angle droit de la figure du Début clignote (s'il y en a un)
+        start.figFlash = true; majEtats();
+        await attendre(Math.max(900, vitesse * 1.6)); if (token !== runToken) return null;
+        delete start.figFlash; majEtats();
+      }
+    }
     if (cur.type === "cond"){
       const c = act.conditions.find(c => c.key === cur.key), ligne = c && c.valeurs ? c.valeurs(v) : null;
       if (ligne){
