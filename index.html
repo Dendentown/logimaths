@@ -52,6 +52,7 @@ main{flex:1;display:flex;min-height:0}
 .calc.flash{animation:flashLigne .9s ease-out}
 /* ce sont les lettres et les symboles qui clignotent en blanc (pas de fond) */
 @keyframes flashLigne{0%{opacity:0;color:#fff;text-shadow:0 0 6px #fff,0 0 12px #fff}20%{opacity:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #fff}40%{opacity:.25}60%{opacity:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #fff}100%{opacity:1;text-shadow:none}}
+.block.abulle{z-index:8}
 .bulle{position:absolute;left:calc(100% + 16px);top:50%;transform:translateY(-50%);background:#101a36;border:2px solid #3fc1a5;border-radius:10px;padding:6px 12px;white-space:nowrap;z-index:5;font-weight:700;color:var(--txt);pointer-events:none}
 .bulle .egal{align-items:center}
 .bulle .calc{font-size:15px}
@@ -1120,6 +1121,8 @@ function majEtats(){
     el.classList.toggle("stuck", !!b.stuck);
     if (b.type === "start" || b.type === "out" || b.type === "act") el.querySelector(".face").innerHTML = texteBloc(b);
     if (b.type === "out") el.classList.toggle("calcul", !!b.extra);
+    // un bloc qui affiche ses calculs passe devant tous les autres blocs
+    el.classList.toggle("abulle", !!b.bulle);
     el.querySelectorAll(".plabel").forEach(lb => lb.classList.toggle("lit", b.portLit === lb.dataset.port));
   });
   dessinerLiens();
