@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logimaths</title>
+<style>
+:root{
+  --bg:#0e1630; --grid:#1f2d52; --panel:#151f3d; --line:#33467a;
+  --block:#22315a; --blockb:#4a5f99; --txt:#e3e9ff; --muted:#8c9cc9;
+  --lit:#ffffff; --ok:#2ecc71; --ko:#ff4d4d; --accent:#ffc94d; --warn:#ff9f43;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:16px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+h1{margin:0;font-size:24px;letter-spacing:1px;font-weight:800}
+h1 b{color:var(--accent)}
+#titreAct{font-weight:700;font-size:15px}
+#consigne{flex:1;min-width:260px;font-size:14px;color:var(--muted);line-height:1.35}
+header button,footer button{font:inherit}
+.btn{background:var(--block);color:var(--txt);border:1px solid var(--blockb);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn.main{background:var(--accent);color:#1b1b1b;border-color:var(--accent);font-weight:700}
+main{flex:1;display:flex;min-height:0}
+#palette{width:240px;flex-shrink:0;background:var(--panel);padding:10px 12px;overflow:auto;border-right:1px solid var(--line)}
+#palette h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:12px 0 6px}
+.pal{background:var(--block);border:2px solid var(--blockb);border-radius:10px;padding:9px 10px;margin-bottom:8px;font-size:13px;cursor:grab;touch-action:none;user-select:none;position:relative}
+.pal.cond{border-color:#7a8fd6}
+.pal.cond::before{content:"◆ ";color:#7a8fd6}
+.pal.out::before{content:"■ ";color:var(--accent)}
+.pal:hover{border-color:var(--accent)}
+.aide{font-size:12px;color:var(--muted);line-height:1.4;margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+#zone{flex:1;overflow:auto;position:relative;min-width:0}
+#ws{position:relative;width:1100px;height:820px;background-image:radial-gradient(var(--grid) 1.6px,transparent 1.6px);background-size:24px 24px}
+svg#links{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1}
+svg#links path.vis{fill:none;stroke:#6f83bd;stroke-width:3}
+svg#links path.vis.lit{stroke:var(--lit);stroke-width:4;filter:drop-shadow(0 0 6px #fff)}
+svg#links path.hit{fill:none;stroke:transparent;stroke-width:16;pointer-events:stroke;cursor:pointer}
+svg#links path.hit:hover + path.vis{stroke:var(--ko)}
+.block{position:absolute;z-index:2;touch-action:none;user-select:none;cursor:grab;color:var(--txt);transition:filter .2s}
+.block.dragging{cursor:grabbing;z-index:5}
+.block .face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;transition:background .25s,color .25s,box-shadow .25s,border-color .25s}
+/* départ */
+.block.start{width:170px;height:56px}
+.block.start .face{background:#2d3f73;border:3px solid var(--accent);border-radius:28px;font-size:20px;font-weight:700;font-family:ui-monospace,Consolas,monospace}
+/* condition (losange) */
+.block.cond{width:240px;height:150px}
+.block.cond .bord,.block.cond .face{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.block.cond .bord{position:absolute;inset:0;background:#7a8fd6;transition:background .25s}
+.block.cond .face{inset:3px;background:var(--block);font-size:13.5px;line-height:1.25;padding:0 58px}
+/* sorties */
+.block.out{width:210px;height:68px}
+.block.out .face{background:var(--block);border:3px solid var(--blockb);border-radius:8px;font-size:15px;font-weight:600;padding:0 10px}
+/* états */
+.block.lit .face{background:var(--lit);color:#111;box-shadow:0 0 22px 6px rgba(255,255,255,.55)}
+.block.cond.lit .bord{background:#fff}
+.block.cond.lit{filter:drop-shadow(0 0 14px rgba(255,255,255,.8))}
+.block.start.lit .face{border-color:#fff}
+.block.out.ok .face{background:var(--ok);border-color:#a8ffcb;color:#06240f;box-shadow:0 0 26px 8px rgba(46,204,113,.6)}
+.block.out.ko .face{background:var(--ko);border-color:#ffc2c2;color:#2a0505;box-shadow:0 0 26px 8px rgba(255,77,77,.6)}
+.block.stuck .face{box-shadow:0 0 0 4px var(--warn)}
+.block.cond.stuck .bord{background:var(--warn)}
+/* ports */
+.port{position:absolute;width:24px;height:24px;border-radius:50%;background:var(--accent);border:3px solid #1b1b1b;cursor:pointer;z-index:3;touch-action:none}
+.port:hover{transform:scale(1.15)}
+.port.sel{animation:pulse .8s infinite alternate;background:#fff}
+.port.used{background:#9fb2ea}
+@keyframes pulse{from{box-shadow:0 0 0 0 rgba(255,201,77,.9)}to{box-shadow:0 0 0 10px rgba(255,201,77,0)}}
+.plabel{position:absolute;font-size:12px;font-weight:800;color:var(--muted);pointer-events:none;transition:color .2s}
+.plabel.lit{color:#fff;text-shadow:0 0 6px #fff}
+.del{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#3a2030;color:#ff9a9a;border:1px solid #ff9a9a;font-size:14px;line-height:19px;text-align:center;cursor:pointer;z-index:4;display:none}
+.block:hover .del,.block.touch .del{display:block}
+.block.cond .del{top:8px;right:40px}
+#ghost{position:fixed;pointer-events:none;z-index:50;opacity:.85;display:none;background:var(--block);border:2px dashed var(--accent);border-radius:10px;padding:8px 10px;font-size:13px;max-width:220px}
+footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16px;display:flex;flex-direction:column;gap:8px}
+.ligne{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ligne .lab{font-size:13px;color:var(--muted);margin-right:4px}
+.num{min-width:52px;font-family:ui-monospace,Consolas,monospace;font-size:16px;font-weight:700;background:var(--block);color:var(--txt);border:2px solid var(--blockb);border-radius:8px;padding:6px 10px;cursor:pointer}
+.num:hover{border-color:var(--accent)}
+.num.ok{background:var(--ok);border-color:var(--ok);color:#06240f}
+.num.ko{background:var(--ko);border-color:var(--ko);color:#2a0505}
+.num.cur{outline:3px solid #fff;outline-offset:2px}
+#msg{font-size:15px;min-height:22px}
+#msg.ok{color:var(--ok);font-weight:700}
+#msg.ko{color:var(--ko);font-weight:700}
+#msg.warn{color:var(--warn);font-weight:700}
+#bravo{position:fixed;inset:0;background:rgba(5,10,25,.75);display:none;align-items:center;justify-content:center;z-index:100}
+#bravo .carte{background:var(--panel);border:3px solid var(--ok);border-radius:16px;padding:28px 34px;text-align:center;max-width:420px}
+#bravo h2{margin:0 0 8px;color:var(--ok);font-size:28px}
+@media (max-width:760px){
+  main{flex-direction:column}
+  #palette{width:auto;max-height:150px;border-right:none;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+  #palette h3,.aide{display:none}
+  .pal{margin:0;font-size:12px;padding:6px 8px}
+  #consigne{font-size:13px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Logi<b>maths</b></h1>
+  <div>
+    <select id="choixAct" class="btn"></select>
+  </div>
+  <div id="consigne"></div>
+  <button class="btn" id="btnVider" title="Effacer le logigramme">🗑 Tout effacer</button>
+</header>
+
+<main>
+  <aside id="palette"></aside>
+  <div id="zone">
+    <div id="ws">
+      <svg id="links" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="fl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6f83bd"/></marker>
+          <marker id="flLit" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fff"/></marker>
+        </defs>
+        <g id="linksG"></g>
+      </svg>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="ligne">
+    <span class="lab">Remplace « … » par :</span>
+    <span id="nombres" class="ligne"></span>
+    <button class="btn main" id="btnTous">▶ Tester tous les nombres</button>
+  </div>
+  <div id="msg">Construis ta machine, puis choisis un nombre pour la tester.</div>
+</footer>
+
+<div id="ghost"></div>
+<div id="bravo"><div class="carte"><h2>Bravo ! 🎉</h2><p id="bravoTxt"></p><button class="btn main" id="btnFermer">Continuer</button></div></div>
+
+<script>
+/* =====================================================================
+   ACTIVITÉS — pour ajouter une activité, copier un objet de ce tableau.
+   ===================================================================== */
+const ACTIVITES = [
+  {
+    id: "multiple5",
+    titre: "Activité 1 — Multiple de 5",
+    consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 5. " +
+              "Place les blocs, relie-les avec des flèches, puis teste ta machine avec les nombres.",
+    conditions: [
+      { key: "u0", texte: "Le chiffre des unités de n est 0", test: n => n % 10 === 0 },
+      { key: "u5", texte: "Le chiffre des unités de n est 5", test: n => n % 10 === 5 }
+    ],
+    sorties: [
+      { key: "oui", texte: "n est un multiple de 5" },
+      { key: "non", texte: "n n'est pas un multiple de 5" }
+    ],
+    // bonne réponse attendue pour un nombre n
+    attendu: n => (n % 5 === 0 ? "oui" : "non"),
+    nombres: [20, 35, 47, 5, 130, 58, 2025, 101]
+  }
+];
+
+/* ===================== Dimensions des blocs ===================== */
+const DIM = { start:{w:170,h:56}, cond:{w:240,h:150}, out:{w:210,h:68} };
+const VITESSE = 550;
+
+/* ===================== État ===================== */
+let act, blocks, links, nextId, selPort = null, runToken = 0;
+const $ = s => document.querySelector(s);
+const ws = $("#ws"), zone = $("#zone"), linksG = $("#linksG");
+
+function etatInitial(){
+  blocks = [{ id: 1, type: "start", x: 60, y: 30 }];
+  links = []; nextId = 2;
+}
+function sauver(){
+  try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId })); } catch(e){}
+}
+function charger(){
+  try {
+    const d = JSON.parse(localStorage.getItem("logimaths-" + act.id));
+    if (d && d.blocks && d.blocks.some(b => b.type === "start")) { blocks = d.blocks; links = d.links; nextId = d.nextId; return; }
+  } catch(e){}
+  etatInitial();
+}
+
+/* ===================== Chargement d'une activité ===================== */
+function chargerActivite(i){
+  act = ACTIVITES[i];
+  $("#consigne").innerHTML = act.consigne;
+  const pal = $("#palette");
+  pal.innerHTML = "<h3>Conditions</h3>";
+  act.conditions.forEach(c => pal.appendChild(itemPalette("cond", c.key, c.texte)));
+  pal.insertAdjacentHTML("beforeend", "<h3>Sorties</h3>");
+  act.sorties.forEach(s => pal.appendChild(itemPalette("out", s.key, s.texte)));
+  pal.insertAdjacentHTML("beforeend",
+    `<div class="aide"><b>Comment faire ?</b><br>
+     • Glisse un bloc dans la zone (ou touche-le).<br>
+     • Touche un <span style="color:var(--accent)">●</span> puis touche un bloc pour tracer une flèche.<br>
+     • Touche une flèche pour l'effacer.<br>
+     • Le × supprime un bloc.<br>
+     • Tu peux utiliser plusieurs fois le même bloc.</div>`);
+  const nb = $("#nombres"); nb.innerHTML = "";
+  act.nombres.forEach(n => {
+    const b = document.createElement("button");
+    b.className = "num"; b.textContent = n; b.dataset.n = n;
+    b.onclick = () => testerUn(n);
+    nb.appendChild(b);
+  });
+  charger(); rendu(); effacerEtats();
+}
+
+function itemPalette(type, key, texte){
+  const d = document.createElement("div");
+  d.className = "pal " + type; d.textContent = texte;
+  d.addEventListener("pointerdown", e => dragPalette(e, type, key, texte));
+  return d;
+}
+
+/* ===================== Rendu ===================== */
+function texteBloc(b){
+  if (b.type === "start") return "n = " + (b.val ?? "…");
+  if (b.type === "cond") return act.conditions.find(c => c.key === b.key)?.texte ?? "?";
+  return act.sorties.find(s => s.key === b.key)?.texte ?? "?";
+}
+function ports(b){
+  const d = DIM[b.type];
+  if (b.type === "start") return [{ name:"next", x:d.w/2, y:d.h, dir:[0,1] }];
+  if (b.type === "cond")  return [{ name:"oui", x:d.w/2, y:d.h, dir:[0,1], label:"Oui" },
+                                  { name:"non", x:d.w, y:d.h/2, dir:[1,0], label:"Non" }];
+  return [];
+}
+
+function rendu(){
+  ws.querySelectorAll(".block").forEach(e => e.remove());
+  blocks.forEach(b => {
+    const d = DIM[b.type];
+    const el = document.createElement("div");
+    el.className = "block " + b.type; el.dataset.id = b.id;
+    el.style.left = b.x + "px"; el.style.top = b.y + "px";
+    el.innerHTML = (b.type === "cond" ? '<div class="bord"></div>' : "") +
+                   `<div class="face">${texteBloc(b)}</div>`;
+    ports(b).forEach(p => {
+      const pe = document.createElement("div");
+      pe.className = "port"; pe.dataset.port = p.name;
+      pe.style.left = (p.x - 12) + "px"; pe.style.top = (p.y - 12) + "px";
+      if (links.some(l => l.from === b.id && l.port === p.name)) pe.classList.add("used");
+      if (selPort && selPort.id === b.id && selPort.port === p.name) pe.classList.add("sel");
+      pe.addEventListener("pointerdown", e => { e.stopPropagation(); clicPort(b.id, p.name); });
+      el.appendChild(pe);
+      if (p.label){
+        const lb = document.createElement("div");
+        lb.className = "plabel"; lb.dataset.port = p.name; lb.textContent = p.label;
+        if (p.name === "oui"){ lb.style.left = (p.x + 16) + "px"; lb.style.top = (p.y - 4) + "px"; }
+        else { lb.style.left = (p.x - 6) + "px"; lb.style.top = (p.y - 30) + "px"; }
+        el.appendChild(lb);
+      }
+    });
+    if (b.type !== "start"){
+      const x = document.createElement("div");
+      x.className = "del"; x.textContent = "×"; x.title = "Supprimer ce bloc";
+      x.addEventListener("pointerdown", e => { e.stopPropagation(); supprimerBloc(b.id); });
+      el.appendChild(x);
+    }
+    el.addEventListener("pointerdown", e => dragBloc(e, b, el));
+    ws.appendChild(el);
+  });
+  dessinerLiens();
+}
+
+function dessinerLiens(){
+  linksG.innerHTML = "";
+  links.forEach((l, i) => {
+    const a = blocks.find(b => b.id === l.from), t = blocks.find(b => b.id === l.to);
+    if (!a || !t) return;
+    const p = ports(a).find(p => p.name === l.port);
+    const x1 = a.x + p.x, y1 = a.y + p.y;
+    const x2 = t.x + DIM[t.type].w/2, y2 = t.y - 2;
+    const k = Math.max(50, Math.min(140, Math.hypot(x2-x1, y2-y1) / 2));
+    const dpath = `M${x1} ${y1} C${x1 + p.dir[0]*k} ${y1 + p.dir[1]*k}, ${x2} ${y2 - k}, ${x2} ${y2}`;
+    const hit = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    hit.setAttribute("d", dpath); hit.setAttribute("class", "hit");
+    hit.addEventListener("pointerdown", e => { e.stopPropagation(); links.splice(i, 1); apresModif(); });
+    const vis = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    vis.setAttribute("d", dpath); vis.setAttribute("class", "vis" + (l.lit ? " lit" : ""));
+    vis.setAttribute("marker-end", l.lit ? "url(#flLit)" : "url(#fl)");
+    linksG.appendChild(hit); linksG.appendChild(vis);
+  });
+}
+
+/* ===================== Interactions ===================== */
+function coordWs(e){ const r = ws.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+function borner(b){
+  const d = DIM[b.type];
+  b.x = Math.max(0, Math.min(ws.clientWidth - d.w, b.x));
+  b.y = Math.max(12, Math.min(ws.clientHeight - d.h - 12, b.y));
+}
+
+function clicPort(id, port){
+  stopRun();
+  if (selPort && selPort.id === id && selPort.port === port) selPort = null;
+  else selPort = { id, port };
+  rendu();
+  if (selPort) msg("Touche maintenant le bloc vers lequel la flèche doit aller.", "");
+}
+
+function relier(toId){
+  const to = blocks.find(b => b.id === toId);
+  if (!selPort || to.type === "start" || toId === selPort.id) { selPort = null; rendu(); return; }
+  links = links.filter(l => !(l.from === selPort.id && l.port === selPort.port));
+  links.push({ from: selPort.id, port: selPort.port, to: toId });
+  selPort = null; apresModif();
+  msg("Flèche ajoutée.", "");
+}
+
+function dragBloc(e, b, el){
+  if (e.button !== undefined && e.button !== 0) return;
+  stopRun();
+  const p0 = coordWs(e), ox = p0.x - b.x, oy = p0.y - b.y;
+  let bouge = false;
+  el.setPointerCapture(e.pointerId);
+  if (e.pointerType === "touch"){ ws.querySelectorAll(".block.touch").forEach(x => x.classList.remove("touch")); el.classList.add("touch"); }
+  const move = ev => {
+    const p = coordWs(ev);
+    if (!bouge && Math.hypot(p.x - p0.x, p.y - p0.y) < 5) return;
+    bouge = true; el.classList.add("dragging");
+    b.x = p.x - ox; b.y = p.y - oy; borner(b);
+    el.style.left = b.x + "px"; el.style.top = b.y + "px";
+    dessinerLiens();
+  };
+  const up = () => {
+    el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up);
+    el.classList.remove("dragging");
+    if (bouge) sauver();
+    else if (selPort) relier(b.id);
+  };
+  el.addEventListener("pointermove", move); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+}
+
+function dragPalette(e, type, key, texte){
+  e.preventDefault(); stopRun();
+  const g = $("#ghost"); g.textContent = texte;
+  const x0 = e.clientX, y0 = e.clientY; let bouge = false;
+  const move = ev => {
+    if (!bouge && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 6) return;
+    bouge = true; g.style.display = "block";
+    g.style.left = (ev.clientX - 20) + "px"; g.style.top = (ev.clientY - 15) + "px";
+  };
+  const up = ev => {
+    window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up);
+    g.style.display = "none";
+    const d = DIM[type]; let x, y;
+    const zr = zone.getBoundingClientRect();
+    if (!bouge){
+      // simple toucher : on place le bloc au milieu de la partie visible
+      const n = blocks.length % 6;
+      x = zone.scrollLeft + zone.clientWidth/2 - d.w/2 + n*18;
+      y = zone.scrollTop + zone.clientHeight/2 - d.h/2 + n*18;
+    } else if (ev.clientX >= zr.left && ev.clientX <= zr.right && ev.clientY >= zr.top && ev.clientY <= zr.bottom){
+      const p = coordWs(ev); x = p.x - d.w/2; y = p.y - d.h/2;
+    } else return;
+    const b = { id: nextId++, type, key, x, y }; borner(b);
+    blocks.push(b); apresModif();
+  };
+  window.addEventListener("pointermove", move); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
+}
+
+ws.addEventListener("pointerdown", e => {
+  if (e.target === ws || e.target.closest("svg") && !e.target.classList.contains("hit")){
+    ws.querySelectorAll(".block.touch").forEach(x => x.classList.remove("touch"));
+    if (selPort){ selPort = null; rendu(); msg("", ""); }
+  }
+});
+
+function supprimerBloc(id){
+  stopRun();
+  blocks = blocks.filter(b => b.id !== id);
+  links = links.filter(l => l.from !== id && l.to !== id);
+  if (selPort && selPort.id === id) selPort = null;
+  apresModif();
+}
+function apresModif(){ effacerEtats(); sauver(); rendu(); }
+
+/* ===================== Exécution de la machine ===================== */
+const attendre = ms => new Promise(r => setTimeout(r, ms));
+function stopRun(){ runToken++; }
+function msg(t, cls){ const m = $("#msg"); m.innerHTML = t; m.className = cls || ""; }
+
+function effacerEtats(){
+  blocks.forEach(b => { if (b.type === "start") delete b.val; });
+  links.forEach(l => delete l.lit);
+  document.querySelectorAll(".num").forEach(n => n.classList.remove("ok","ko","cur"));
+  majEtats();
+}
+function majEtats(){
+  ws.querySelectorAll(".block").forEach(el => {
+    const b = blocks.find(x => x.id == el.dataset.id);
+    el.classList.toggle("lit", !!b.lit);
+    el.classList.toggle("ok", b.res === "ok");
+    el.classList.toggle("ko", b.res === "ko");
+    el.classList.toggle("stuck", !!b.stuck);
+    if (b.type === "start") el.querySelector(".face").textContent = texteBloc(b);
+    el.querySelectorAll(".plabel").forEach(lb => lb.classList.toggle("lit", b.portLit === lb.dataset.port));
+  });
+  dessinerLiens();
+}
+function reinitLumieres(){
+  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; });
+  links.forEach(l => delete l.lit);
+}
+
+// Fait passer n dans la machine. Renvoie "ok", "ko", "bloque" ou "boucle".
+async function executer(n, vitesse, token){
+  reinitLumieres();
+  const start = blocks.find(b => b.type === "start");
+  start.val = n;
+  let cur = start, pas = 0;
+  cur.lit = true; majEtats(); await attendre(vitesse);
+  while (true){
+    if (token !== runToken) return null;
+    if (cur.type === "out"){
+      const bon = cur.key === act.attendu(n);
+      cur.lit = false; cur.res = bon ? "ok" : "ko"; majEtats();
+      return bon ? "ok" : "ko";
+    }
+    let port = "next";
+    if (cur.type === "cond"){
+      const c = act.conditions.find(c => c.key === cur.key);
+      port = c.test(n) ? "oui" : "non";
+      cur.portLit = port; majEtats(); await attendre(vitesse/2);
+      if (token !== runToken) return null;
+    }
+    const l = links.find(l => l.from === cur.id && l.port === port);
+    if (!l){ cur.stuck = true; majEtats(); return "bloque"; }
+    l.lit = true; majEtats(); await attendre(vitesse/2);
+    if (token !== runToken) return null;
+    cur = blocks.find(b => b.id === l.to);
+    cur.lit = true; majEtats(); await attendre(vitesse);
+    if (++pas > 30) return "boucle";
+  }
+}
+
+function texteResultat(n, r){
+  if (r === "ok") return `✔ Pour n = ${n}, ta machine donne la bonne réponse.`;
+  if (r === "ko") return `✘ Pour n = ${n}, ta machine se trompe !`;
+  if (r === "bloque") return `⚠ Pour n = ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
+  return `⚠ Pour n = ${n}, la machine tourne en rond !`;
+}
+
+async function testerUn(n){
+  stopRun(); const token = runToken;
+  document.querySelectorAll(".num").forEach(b => b.classList.toggle("cur", b.dataset.n == n));
+  msg(`La machine teste n = ${n}…`, "");
+  const r = await executer(n, VITESSE, token);
+  if (r === null) return;
+  const btn = document.querySelector(`.num[data-n="${n}"]`);
+  btn.classList.remove("ok","ko"); btn.classList.add(r === "ok" ? "ok" : "ko");
+  msg(texteResultat(n, r), r === "ok" ? "ok" : r === "ko" ? "ko" : "warn");
+}
+
+async function testerTous(){
+  stopRun(); const token = runToken;
+  document.querySelectorAll(".num").forEach(b => b.classList.remove("ok","ko","cur"));
+  let erreurs = 0;
+  for (const n of act.nombres){
+    const btn = document.querySelector(`.num[data-n="${n}"]`);
+    document.querySelectorAll(".num").forEach(b => b.classList.remove("cur")); btn.classList.add("cur");
+    msg(`La machine teste n = ${n}…`, "");
+    const r = await executer(n, 280, token);
+    if (r === null) return;
+    btn.classList.add(r === "ok" ? "ok" : "ko");
+    if (r !== "ok") erreurs++;
+    await attendre(450);
+    if (token !== runToken) return;
+  }
+  document.querySelectorAll(".num").forEach(b => b.classList.remove("cur"));
+  if (erreurs === 0){
+    msg("✔ Ta machine donne la bonne réponse pour tous les nombres !", "ok");
+    $("#bravoTxt").textContent = "Ta machine de vérification fonctionne pour tous les nombres testés.";
+    $("#bravo").style.display = "flex";
+  } else {
+    msg(`✘ Ta machine se trompe pour ${erreurs} nombre${erreurs > 1 ? "s" : ""} (en rouge). Clique dessus pour voir le chemin.`, "ko");
+  }
+}
+
+/* ===================== Démarrage ===================== */
+ACTIVITES.forEach((a, i) => { const o = document.createElement("option"); o.value = i; o.textContent = a.titre; $("#choixAct").appendChild(o); });
+$("#choixAct").onchange = e => { stopRun(); selPort = null; chargerActivite(+e.target.value); };
+$("#btnTous").onclick = testerTous;
+$("#btnVider").onclick = () => { if (confirm("Effacer tout le logigramme ?")){ stopRun(); selPort = null; etatInitial(); apresModif(); msg("Logigramme effacé.", ""); } };
+$("#btnFermer").onclick = () => { $("#bravo").style.display = "none"; };
+chargerActivite(0);
+</script>
+</body>
+</html>
