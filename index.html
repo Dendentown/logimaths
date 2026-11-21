@@ -32,6 +32,8 @@ main{flex:1;display:flex;min-height:0}
 .pal.cond .bord{inset:0;background:#7a8fd6;transition:background .15s}
 .pal.cond .face{inset:2px;background:var(--block);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 44px;font-size:12px;line-height:1.2}
 .pal.cond:hover .bord{background:var(--accent)}
+.pal.start{border-color:var(--accent);border-radius:22px;text-align:center;font-family:ui-monospace,Consolas,monospace;font-weight:700;font-size:15px}
+.minislot{display:inline-block;width:34px;height:18px;border:2px dashed var(--accent);border-radius:4px;vertical-align:middle}
 .pal.out::before{content:"■ ";color:var(--accent)}
 .pal:hover{border-color:var(--accent)}
 .pal.pris{opacity:.35;cursor:not-allowed;border-style:dashed}
@@ -232,17 +234,8 @@ const ws = $("#ws"), zone = $("#zone"), linksG = $("#linksG"), tmpG = $("#tmpG")
 let pointeur = null;
 
 function etatInitial(){
-  blocks = [{ id: 1, type: "start", x: 60, y: 30 }];
-  links = []; nextId = 2;
-  centrerDepart();
-}
-// place le bloc de départ en haut, au centre de la zone visible (les autres blocs suivent)
-function centrerDepart(){
-  const st = blocks.find(b => b.type === "start"); if (!st) return;
-  const cible = Math.max(20, Math.round((zone.clientWidth - DIM.start.w) / 2));
-  const dx = cible - st.x, dy = 30 - st.y;
-  if (!dx && !dy) return;
-  blocks.forEach(b => { b.x += dx; b.y += dy; borner(b); });
+  // le joueur pose lui-même le bloc « Début »
+  blocks = []; links = []; nextId = 1;
 }
 function sauver(){
   try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId })); } catch(e){}
@@ -250,7 +243,7 @@ function sauver(){
 function charger(){
   try {
     const d = JSON.parse(localStorage.getItem("logimaths-" + act.id));
-    if (d && d.blocks && d.blocks.some(b => b.type === "start")) {
+    if (d && Array.isArray(d.blocks)) {
       blocks = d.blocks; links = d.links; nextId = d.nextId;
       // une seule sortie de chaque type : on fusionne les doublons des anciennes sauvegardes
       const garde = {};
@@ -270,18 +263,20 @@ function chargerActivite(i){
   act = ACTIVITES[i];
   $("#consigne").innerHTML = act.consigne;
   const pal = $("#palette");
-  pal.innerHTML = "<h3>Conditions</h3>";
+  pal.innerHTML = "<h3>Début</h3>";
+  pal.appendChild(itemPalette("start", "debut", `${act.entree || "n ="} <span class="minislot"></span>`));
+  pal.insertAdjacentHTML("beforeend", "<h3>Conditions</h3>");
   act.conditions.forEach(c => pal.appendChild(itemPalette("cond", c.key, c.texte)));
-  pal.insertAdjacentHTML("beforeend", "<h3>Sorties</h3>");
+  pal.insertAdjacentHTML("beforeend", "<h3>Fin</h3>");
   act.sorties.forEach(s => pal.appendChild(itemPalette("out", s.key, s.texte)));
   pal.insertAdjacentHTML("beforeend",
     `<div class="aide"><b>Comment faire ?</b><br>
-     • Glisse un bloc dans la zone (ou touche-le).<br>
+     • Glisse les blocs dans la zone (ou touche-les) : un Début, des conditions et les blocs de Fin.<br>
      • Touche un <span style="color:var(--accent)">●</span> de sortie (en bas ou à droite), puis le <span style="color:var(--accent)">●</span> d'entrée d'un bloc (en haut) pour tracer une flèche.<br>
      • Touche une flèche pour l'effacer.<br>
      • Le × supprime un bloc.<br>
      • Tu peux poser plusieurs fois une condition.<br>
-     • Chaque sortie ne se pose qu'une fois : plusieurs flèches peuvent arriver sur la même sortie.</div>`);
+     • Le Début et chaque bloc de Fin ne se posent qu'une fois : plusieurs flèches peuvent arriver sur la même Fin.</div>`);
   const nb = $("#nombres"); nb.innerHTML = "";
   act.nombres.forEach((v, i) => {
     const b = document.createElement("button");
@@ -291,13 +286,14 @@ function chargerActivite(i){
   });
   DIM.start.w = act.largeurDepart || 190;
   $("#labNombres").textContent = act.affiche ? "Glisse un triangle dans la case :" : "Glisse un nombre dans la case :";
-  nCourant = null; charger(); centrerDepart(); sauver(); rendu(); effacerEtats();
+  nCourant = null; charger(); rendu(); effacerEtats();
 }
 
 function itemPalette(type, key, texte){
   const d = document.createElement("div");
   d.className = "pal " + type; d.dataset.key = key;
   if (type === "cond") d.innerHTML = `<div class="bord"></div><div class="face">${texte}</div>`;
+  else if (type === "start") d.innerHTML = texte;
   else d.textContent = texte;
   d.addEventListener("pointerdown", e => dragPalette(e, type, key, texte));
   return d;
@@ -322,6 +318,7 @@ function rendu(){
   document.body.classList.toggle("cible", !!(selPort && selPort.port !== "in"));
   document.querySelectorAll(".pal.out").forEach(p =>
     p.classList.toggle("pris", blocks.some(b => b.type === "out" && b.key === p.dataset.key)));
+  document.querySelectorAll(".pal.start").forEach(p => p.classList.toggle("pris", blocks.some(b => b.type === "start")));
   ws.querySelectorAll(".block").forEach(e => e.remove());
   blocks.forEach(b => {
     const d = DIM[b.type];
@@ -356,7 +353,7 @@ function rendu(){
       pin.addEventListener("pointerdown", e => { e.stopPropagation(); clicPort(b.id, "in"); });
       el.appendChild(pin);
     }
-    if (b.type !== "start"){
+    {
       const x = document.createElement("div");
       x.className = "del"; x.textContent = "×"; x.title = "Supprimer ce bloc";
       x.addEventListener("pointerdown", e => { e.stopPropagation(); supprimerBloc(b.id); });
@@ -448,10 +445,14 @@ function dragBloc(e, b, el){
 function dragPalette(e, type, key, texte){
   e.preventDefault(); stopRun();
   if (type === "out" && blocks.some(b => b.type === "out" && b.key === key)){
-    msg("⚠ Cette sortie est déjà posée. Tu peux faire arriver plusieurs flèches sur la même sortie.", "warn");
+    msg("⚠ Ce bloc de Fin est déjà posé. Tu peux faire arriver plusieurs flèches sur le même bloc.", "warn");
     return;
   }
-  const g = $("#ghost"); g.textContent = texte;
+  if (type === "start" && blocks.some(b => b.type === "start")){
+    msg("⚠ Le bloc Début est déjà posé : une machine n'a qu'un seul début.", "warn");
+    return;
+  }
+  const g = $("#ghost"); g.innerHTML = texte;
   const x0 = e.clientX, y0 = e.clientY; let bouge = false, dernier = { clientX: x0, clientY: y0 };
   try { e.currentTarget.setPointerCapture(e.pointerId); } catch(_){}
   const move = ev => {
@@ -468,11 +469,12 @@ function dragPalette(e, type, key, texte){
     const zr = zone.getBoundingClientRect();
     if (!bouge){
       // simple toucher : on place le bloc au milieu de la partie visible
-      ({ x, y } = placeLibre(type));
+      if (type === "start"){ x = zone.scrollLeft + (zone.clientWidth - d.w) / 2; y = zone.scrollTop + 30; }
+      else ({ x, y } = placeLibre(type));
     } else if (ev.clientX >= zr.left && ev.clientX <= zr.right && ev.clientY >= zr.top && ev.clientY <= zr.bottom){
       const p = coordWs(ev); x = p.x - d.w/2; y = p.y - d.h/2;
     } else return;
-    const b = { id: nextId++, type, key, x, y }; borner(b);
+    const b = { id: nextId++, type, x, y }; if (type !== "start") b.key = key; borner(b);
     blocks.push(b); apresModif();
   };
   window.addEventListener("pointermove", move); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
@@ -574,7 +576,7 @@ function lancer(){
 function placeLibre(type){
   // cherche une place visible où le nouveau bloc ne chevauche aucun autre bloc
   const d = DIM[type], m = 20;
-  const x0 = zone.scrollLeft + 20, y0 = zone.scrollTop + 20;
+  const x0 = zone.scrollLeft + 20, y0 = zone.scrollTop + 40;
   const x1 = Math.min(ws.clientWidth, zone.scrollLeft + zone.clientWidth) - d.w - 20;
   const y1 = Math.min(ws.clientHeight, zone.scrollTop + zone.clientHeight) - d.h - 20;
   const libre = (x, y) => blocks.every(b => {
@@ -631,6 +633,7 @@ async function executer(i, vitesse, token){
   reinitLumieres();
   const n = act.nombres[i];
   const start = blocks.find(b => b.type === "start");
+  if (!start) return "nodebut";
   start.val = i;
   let cur = start, pas = 0;
   cur.lit = true; majEtats(); await attendre(vitesse);
@@ -663,6 +666,7 @@ function texteResultat(i, r){
   if (r === "ok") return `✔ Pour ${n}, ta machine donne la bonne réponse.`;
   if (r === "ko") return `✘ Pour ${n}, ta machine se trompe !`;
   if (r === "bloque") return `⚠ Pour ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
+  if (r === "nodebut") return "⚠ Ta machine n'a pas de bloc Début : glisse-le depuis le menu.";
   return `⚠ Pour ${n}, la machine tourne en rond !`;
 }
 
@@ -672,6 +676,7 @@ async function testerUn(n){
   msg(`La machine teste ${nom(act.nombres[n])}…`, "");
   const r = await executer(n, VITESSE, token);
   if (r === null) return;
+  if (r === "nodebut"){ msg(texteResultat(n, r), "warn"); return; }
   const btn = document.querySelector(`.num[data-n="${n}"]`);
   btn.classList.remove("ok","ko"); btn.classList.add(r === "ok" ? "ok" : "ko");
   msg(texteResultat(n, r), r === "ok" ? "ok" : r === "ko" ? "ko" : "warn");
@@ -679,6 +684,7 @@ async function testerUn(n){
 
 async function testerTous(){
   stopRun(); const token = runToken;
+  if (!blocks.some(b => b.type === "start")){ msg(texteResultat(0, "nodebut"), "warn"); return; }
   document.querySelectorAll(".num").forEach(b => b.classList.remove("ok","ko","cur"));
   let erreurs = 0;
   for (let n = 0; n < act.nombres.length; n++){
@@ -703,8 +709,7 @@ async function testerTous(){
 }
 
 /* ===================== Démarrage ===================== */
-let resizeTimer = null;
-window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { centrerDepart(); sauver(); rendu(); majEtats(); }, 200); });
+
 document.addEventListener("dragstart", e => e.preventDefault());
 document.addEventListener("selectstart", e => { if (e.target.closest && e.target.closest("#palette,#ws,#nombres")) e.preventDefault(); });
 ACTIVITES.forEach((a, i) => { const o = document.createElement("option"); o.value = i; o.textContent = a.titre; $("#choixAct").appendChild(o); });
