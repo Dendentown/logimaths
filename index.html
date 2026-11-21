@@ -148,6 +148,21 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
    ===================================================================== */
 const ACTIVITES = [
   {
+    id: "multiple10",
+    titre: "Activité 0 — Multiple de 10",
+    consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 10. " +
+              "Place les blocs, relie-les avec des flèches, glisse un nombre dans la case et lance la vérification.",
+    conditions: [
+      { key: "u0", texte: "Le chiffre des unités de n est 0", test: n => n % 10 === 0 }
+    ],
+    sorties: [
+      { key: "oui", texte: "n est un multiple de 10" },
+      { key: "non", texte: "n n'est pas un multiple de 10" }
+    ],
+    attendu: n => (n % 10 === 0 ? "oui" : "non"),
+    nombres: [30, 45, 7, 100, 250, 81, 2020, 15]
+  },
+  {
     id: "multiple5",
     titre: "Activité 1 — Multiple de 5",
     consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 5. " +

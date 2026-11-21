@@ -2,6 +2,11 @@
 
 Jeu de logique : l'élève construit une **machine de vérification** sous forme de logigramme, puis la teste avec des nombres.
 
+## Activité 0 — Multiple de 10
+- Entrée : `n = [   ]`
+- Condition : « Le chiffre des unités de n est 0 »
+- Sorties : « n est un multiple de 10 », « n n'est pas un multiple de 10 »
+
 ## Activité 1 — Multiple de 5
 - Entrée : `n = [   ]` (case où l'on glisse un nombre)
 - Conditions : « Le chiffre des unités de n est 0 », « Le chiffre des unités de n est 5 »
