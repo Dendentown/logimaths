@@ -74,9 +74,10 @@ body.cible .port.in{box-shadow:0 0 0 4px rgba(255,201,77,.45)}
 @keyframes pulse{from{box-shadow:0 0 0 0 rgba(255,201,77,.9)}to{box-shadow:0 0 0 10px rgba(255,201,77,0)}}
 .plabel{position:absolute;font-size:12px;font-weight:800;color:var(--muted);pointer-events:none;transition:color .2s}
 .plabel.lit{color:#fff;text-shadow:0 0 6px #fff}
-.del{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#3a2030;color:#ff9a9a;border:1px solid #ff9a9a;font-size:14px;line-height:19px;text-align:center;cursor:pointer;z-index:4;display:none}
+.del{position:absolute;top:-10px;right:-10px;width:28px;height:28px;border-radius:50%;background:#c0392b;color:#fff;border:2px solid #fff;font-size:18px;font-weight:700;line-height:23px;text-align:center;cursor:pointer;z-index:4;display:none}
 .block:hover .del,.block.touch .del{display:block}
-.block.cond .del{top:8px;right:40px}
+.block.cond .del{top:10px;right:42px}
+@media (hover:none){ .block .del{display:block} }
 #ghost{position:fixed;pointer-events:none;z-index:50;opacity:.85;display:none;background:var(--block);border:2px dashed var(--accent);border-radius:10px;padding:8px 10px;font-size:13px;max-width:220px}
 footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16px;display:flex;flex-direction:column;gap:8px}
 .ligne{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -418,9 +419,7 @@ function dragPalette(e, type, key, texte){
     const zr = zone.getBoundingClientRect();
     if (!bouge){
       // simple toucher : on place le bloc au milieu de la partie visible
-      const n = blocks.length % 6;
-      x = zone.scrollLeft + zone.clientWidth/2 - d.w/2 + n*18;
-      y = zone.scrollTop + zone.clientHeight/2 - d.h/2 + n*18;
+      ({ x, y } = placeLibre(type));
     } else if (ev.clientX >= zr.left && ev.clientX <= zr.right && ev.clientY >= zr.top && ev.clientY <= zr.bottom){
       const p = coordWs(ev); x = p.x - d.w/2; y = p.y - d.h/2;
     } else return;
@@ -521,6 +520,23 @@ function placerNombre(n){
 function lancer(){
   if (nCourant == null){ msg("⚠ Glisse d'abord un nombre dans la case « n = ».", "warn"); return; }
   testerUn(nCourant);
+}
+
+function placeLibre(type){
+  // cherche une place visible où le nouveau bloc ne chevauche aucun autre bloc
+  const d = DIM[type], m = 20;
+  const x0 = zone.scrollLeft + 20, y0 = zone.scrollTop + 20;
+  const x1 = Math.min(ws.clientWidth, zone.scrollLeft + zone.clientWidth) - d.w - 20;
+  const y1 = Math.min(ws.clientHeight, zone.scrollTop + zone.clientHeight) - d.h - 20;
+  const libre = (x, y) => blocks.every(b => {
+    const e = DIM[b.type];
+    return x + d.w + m < b.x || b.x + e.w + m < x || y + d.h + m < b.y || b.y + e.h + m < y;
+  });
+  for (let y = y0; y <= Math.max(y0, y1); y += 30)
+    for (let x = x0; x <= Math.max(x0, x1); x += 30)
+      if (libre(x, y)) return { x, y };
+  const n = blocks.length % 6;
+  return { x: zone.scrollLeft + zone.clientWidth/2 - d.w/2 + n*30, y: zone.scrollTop + zone.clientHeight/2 - d.h/2 + n*30 };
 }
 
 function supprimerBloc(id){
