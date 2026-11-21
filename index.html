@@ -176,7 +176,7 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
   footer{padding:6px 10px;gap:5px}
   footer .ligne{flex-wrap:nowrap}
   #nombres{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding-bottom:2px}
-  footer .ligne:first-child{flex-direction:column;align-items:stretch;gap:3px}
+  footer > .ligne:first-child{min-width:0}
   .ligne .lab{font-size:12px}
   .num{flex:0 0 auto;font-size:15px;padding:4px 8px;min-width:40px}
   .num svg.fig{width:84px;height:62px}
@@ -201,8 +201,7 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
   .pal.cond{width:148px;height:78px;margin:0 auto 6px}
   .pal.cond .face{font-size:10px;padding:0 28px}
   footer{flex-direction:row;flex-wrap:wrap;align-items:center;padding:4px 10px;gap:3px 10px}
-  footer .ligne:first-child{flex:1;min-width:0;flex-wrap:nowrap}
-  footer .ligne:first-child .lab{display:none}
+  footer > .ligne:first-child{flex:1;min-width:0;flex-wrap:nowrap}
   #nombres{flex-wrap:nowrap;overflow-x:auto;min-width:0;padding-bottom:2px}
   .num{flex:0 0 auto;font-size:14px;padding:3px 8px;min-width:38px}
   .num svg.fig{width:80px;height:58px}
@@ -211,6 +210,10 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
   #zoom .btn{width:34px;height:34px;font-size:18px}
   #bravo .carte{padding:16px 22px}
 }
+/* les valeurs restent sur une seule ligne qu'on fait défiler */
+footer > .ligne:first-child{min-width:0;max-width:100%}
+#nombres{flex-wrap:nowrap;overflow-x:auto;min-width:0;max-width:100%;padding-bottom:3px}
+#nombres .num{flex:0 0 auto}
 </style>
 </head>
 <body>
