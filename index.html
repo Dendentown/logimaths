@@ -354,7 +354,9 @@ function etatInitial(){
   blocks = []; links = []; nextId = 1;
 }
 function sauver(){
-  try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId })); } catch(e){}
+  // on n'enregistre pas les lumières du dernier test
+  const tmp = ["lit", "res", "stuck", "portLit", "val"];
+  try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId }, (k, v) => tmp.includes(k) ? undefined : v)); } catch(e){}
 }
 function charger(){
   try {
@@ -502,7 +504,7 @@ function borner(b){
 }
 
 function clicPort(id, port){
-  stopRun();
+  effacerEtats();
   // une sortie est sélectionnée et on touche un point d'entrée : la flèche se colle
   if (port === "in" && selPort && selPort.port !== "in") { relier(id); return; }
   // une entrée est sélectionnée et on touche un point de sortie : la flèche se colle aussi
@@ -536,6 +538,7 @@ function dragBloc(e, b, el){
   const move = ev => {
     const p = coordWs(ev);
     if (!bouge && Math.hypot(p.x - p0.x, p.y - p0.y) < 5) return;
+    if (!bouge) effacerEtats();
     bouge = true; el.classList.add("dragging");
     b.x = p.x - ox; b.y = p.y - oy; borner(b);
     el.style.left = b.x + "px"; el.style.top = b.y + "px";
@@ -712,7 +715,9 @@ const attendre = ms => new Promise(r => setTimeout(r, ms));
 function stopRun(){ runToken++; }
 function msg(t, cls){ const m = $("#msg"); m.innerHTML = t; m.className = cls || ""; }
 
+// efface le chemin blanc et les couleurs (appelé dès que le logigramme change)
 function effacerEtats(){
+  stopRun(); reinitLumieres();
   blocks.forEach(b => { if (b.type === "start") delete b.val; });
   links.forEach(l => delete l.lit);
   document.querySelectorAll(".num").forEach(x => { x.classList.remove("ok","ko"); x.classList.toggle("cur", x.dataset.n == nCourant); });
