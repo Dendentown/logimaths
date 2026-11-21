@@ -351,10 +351,10 @@ const ACTIVITES = [
     valide: (t, e, fin) => {
       const att = ({ a: "plus", b: "moinsB", c: "moins" })[t.hyp] || "nc";
       if (fin !== att) return false;
-      // l'égalité de Pythagore est indispensable : sans elle, la réponse est fausse
-      if (fin === "plus" && e.eq !== "a") return false;
-      if (fin === "moins" && e.eq !== "c") return false;
-      if (fin === "moinsB" && e.eq !== "b") return false;
+      // bonne fin : jamais en rouge ; une égalité oubliée = étape manquante (orange)
+      if (fin === "plus" && e.eq !== "a") return "etape";
+      if (fin === "moins" && e.eq !== "c") return "etape";
+      if (fin === "moinsB" && e.eq !== "b") return "etape";
       // la soustraction (a² = …) peut être sautée : le raisonnement tient, mais il manque une étape (orange)
       if (fin === "moins" && !e.isoleC) return "etape";
       if (fin === "moinsB" && !e.isoleB) return "etape";
@@ -1231,9 +1231,7 @@ function texteResultat(i, r){
   if (r === "ok") return `✔ Pour ${n}, ta machine donne la bonne réponse.` + (dernierBilan ? " " + dernierBilan : "");
   if (r === "ko") return `✘ Pour ${n}, ta machine se trompe !`;
   if (r === "bloque") return `⚠ Pour ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
-  if (r === "etape") return act.id === "pythagore-calculs"
-    ? `⚠ Pour ${n}, la réponse est juste, mais il manque une étape dans le raisonnement.`
-    : `⚠ Pour ${n}, ta machine trouve la bonne réponse, mais il manque une étape dans le raisonnement : l'égalité qui isole a² (en orange).`;
+  if (r === "etape") return `⚠ Pour ${n}, la réponse est juste, mais il manque une étape dans le raisonnement.`;
   if (r === "sansvaleur") return `⚠ Pour ${n}, la machine utilise ${(act.variables || ["une variable"]).join(", ")} alors qu'elle n'a pas encore de valeur (bloc en orange) !`;
   if (r === "nodebut") return "⚠ Ta machine n'a pas de bloc Début : glisse-le depuis le menu.";
   return `⚠ Pour ${n}, la machine tourne en rond : elle repasse au même endroit sans que n change (bloc en orange) !`;

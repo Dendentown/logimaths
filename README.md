@@ -17,7 +17,7 @@ On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lance
 ## Activité 3 — Calculer une longueur avec le théorème de Pythagore
 - Les côtés sont notés a, b, c ; on connaît b et c, a = ? (en bleu sur la figure). Entrée : `Le triangle : [   ]`
 - Conditions : « Le triangle est rectangle », « a est l'hypoténuse », « c est l'hypoténuse », « b est l'hypoténuse »
-- Si la soustraction (a² = …) est oubliée, la réponse est juste mais il manque une étape : la figure et la Fin passent en orange.
+- Si une égalité est oubliée (Pythagore ou a² = …), la réponse n'est pas fausse : il manque une étape dans le raisonnement, la figure et la Fin passent en orange.
 - Actions : « c² + b² = a² », « a² + b² = c² », « a² = c² − b² », « a² + c² = b² », « a² = b² − c² »
 - Fin : « a = √c² − b² », « a = √b² − c² », « a = √c² + b² » (barre de la racine sur tout le calcul), « On ne peut pas utiliser le théorème de Pythagore », « C'est absurde »
 - En arrivant sur une Fin de calcul, le bloc affiche l'égalité avec les valeurs, puis le terme sous la racine calculé, puis la valeur de a.
