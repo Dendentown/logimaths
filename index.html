@@ -246,14 +246,13 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
 
 <footer>
   <div class="ligne">
-    <span class="lab" id="labNombres">Glisse un nombre dans la case :</span>
     <span id="nombres" class="ligne"></span>
   </div>
   <div class="ligne">
     <button class="btn main" id="btnLancer">▶ Lancer la vérification</button>
     <button class="btn" id="btnTous">⏩ Tout tester</button>
   </div>
-  <div id="msg">Construis ta machine, glisse une valeur dans la case jaune, puis lance la vérification.</div>
+  <div id="msg"></div>
 </footer>
 
 <div id="ghost"></div>
@@ -284,8 +283,7 @@ const ACTIVITES = [
   {
     id: "multiple10",
     titre: "Activité 0 — Multiple de 10",
-    consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 10. " +
-              "Place les blocs, relie-les avec des flèches, glisse un nombre dans la case et lance la vérification.",
+    consigne: "Fais un logigramme qui permet de vérifier si un nombre <b>n</b> est un multiple de 10.",
     conditions: [
       { key: "u0", texte: "Le chiffre des unités de n est 0", test: n => n % 10 === 0 }
     ],
@@ -299,8 +297,7 @@ const ACTIVITES = [
   {
     id: "multiple5",
     titre: "Activité 1 — Multiple de 5",
-    consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 5. " +
-              "Place les blocs, relie-les avec des flèches, glisse un nombre dans la case et lance la vérification.",
+    consigne: "Fais un logigramme qui permet de vérifier si un nombre <b>n</b> est un multiple de 5.",
     conditions: [
       { key: "u0", texte: "Le chiffre des unités de n est 0", test: n => n % 10 === 0 },
       { key: "u5", texte: "Le chiffre des unités de n est 5", test: n => n % 10 === 5 }
@@ -316,8 +313,7 @@ const ACTIVITES = [
   {
     id: "pythagore-longueur",
     titre: "Activité 3 — Calculer une longueur avec le théorème de Pythagore",
-    consigne: "Les côtés d'un triangle sont notés a, b et c. On connaît b et c. " +
-              "Construis une machine qui permet de retrouver la longueur du troisième côté a.",
+    consigne: "Fais un logigramme qui permet de calculer la longueur du côté <b>a</b> d'un triangle dont on connaît les côtés b et c.",
     entree: "Le triangle :",
     largeurDepart: 420, hauteurDepart: 146,
     // chaque valeur : longueurs b et c connues, hyp = côté hypoténuse ("a", "b", "c") ou null si le triangle n'est pas rectangle
@@ -382,8 +378,7 @@ const ACTIVITES = [
   {
     id: "pythagore-direct",
     titre: "Activité 4 — Théorème de Pythagore",
-    consigne: "On connaît les angles d'un triangle ABC. " +
-              "Construis une machine qui indique ce que le théorème de Pythagore permet de conclure.",
+    consigne: "Fais un logigramme qui permet de dire ce que le théorème de Pythagore permet de conclure sur un triangle ABC dont on connaît les angles.",
     entree: "Triangle ABC :",
     largeurDepart: 420, hauteurDepart: 132,
     // chaque valeur est un triangle donné par ses angles [Â, B̂, Ĉ] en degrés
@@ -408,8 +403,7 @@ const ACTIVITES = [
   {
     id: "pythagore-calculs",
     titre: "Activité 5 — Réciproque et contraposée, avec les calculs",
-    consigne: "On connaît les longueurs des côtés d'un triangle ABC (en cm). " +
-              "Construis une machine qui cherche le plus grand côté, fait les calculs, puis indique ce que la réciproque et la contraposée du théorème de Pythagore permettent de conclure.",
+    consigne: "Fais un logigramme qui permet de savoir si un triangle ABC est rectangle, en calculant les carrés de ses côtés.",
     entree: "Triangle ABC :",
     largeurDepart: 420, hauteurDepart: 132,
     // chaque valeur est un triangle [AB, AC, BC]
@@ -466,8 +460,7 @@ const ACTIVITES = [
   {
     id: "pythagore-rc",
     titre: "Activité 6 — Réciproque et contraposée du théorème de Pythagore",
-    consigne: "On connaît les longueurs des côtés d'un triangle ABC (en cm). " +
-              "Construis une machine qui indique ce que la réciproque et la contraposée du théorème de Pythagore permettent de conclure.",
+    consigne: "Fais un logigramme qui permet de savoir si un triangle ABC, dont on connaît les longueurs des côtés, est rectangle.",
     entree: "Triangle ABC :",
     largeurDepart: 420, hauteurDepart: 132,
     // chaque valeur est un triangle [AB, AC, BC]
@@ -490,8 +483,7 @@ const ACTIVITES = [
   {
     id: "multiple7-i",
     titre: "Activité 7 — Multiple de 7 (division euclidienne)",
-    consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 7, " +
-              "en faisant la division euclidienne de n par 7.",
+    consigne: "Fais un logigramme qui permet de vérifier si un nombre <b>n</b> est un multiple de 7, en faisant la division euclidienne de n par 7.",
     largeurDepart: 290,
     // l'état de la machine : n (ne change jamais), r (variable de calcul, le reste), q (nombre de soustractions)
     variables: ["r"],
@@ -669,9 +661,8 @@ function chargerActivite(i){
     nb.appendChild(b);
   });
   DIM.start.w = act.largeurDepart || 190; DIM.start.h = act.hauteurDepart || 60;
-  $("#labNombres").textContent = act.affiche ? "Glisse un triangle dans la case :" : "Glisse un nombre dans la case :";
   nCourant = null; charger(); rendu(); effacerEtats();
-  msg("Construis ta machine, glisse une valeur dans la case jaune, puis lance la vérification.", "");
+  msg("", "");
 }
 
 function itemPalette(type, key, texte){
@@ -853,9 +844,7 @@ function clicPort(id, port){
   if (selPort && selPort.id === id && selPort.port === port) selPort = null;
   else selPort = { id, port };
   rendu();
-  if (selPort) msg(port === "in"
-    ? "Touche maintenant le point jaune de sortie (Oui, Non…) d'où part la flèche."
-    : "Touche maintenant le point jaune d'entrée du bloc où la flèche doit arriver.", "");
+
 }
 
 function relier(toId){
@@ -864,7 +853,7 @@ function relier(toId){
   links = links.filter(l => !(l.from === selPort.id && l.port === selPort.port));
   links.push({ from: selPort.id, port: selPort.port, to: toId });
   selPort = null; apresModif();
-  msg("Flèche ajoutée.", "");
+  msg("", "");
 }
 
 let blocChoisi = null;
@@ -1066,7 +1055,7 @@ function dragNombre(e, n){
 function placerNombre(n){
   nCourant = n; effacerEtats();
   document.querySelectorAll(".num").forEach(b => b.classList.toggle("cur", b.dataset.n == n));
-  msg(`${Nom(act.nombres[n])}. Clique sur « Lancer la vérification ».`, "");
+  msg("", "");
 }
 function lancer(){
   if (nCourant == null){ msg("⚠ Glisse d'abord une valeur dans la case jaune.", "warn"); return; }
