@@ -38,6 +38,8 @@ main{flex:1;display:flex;min-height:0}
 .block.act .face{background:var(--block);border:3px solid #3fc1a5;border-radius:4px;font-size:15px;font-weight:700;padding:0 10px}
 .pal.act{border-color:#3fc1a5;border-radius:4px;font-weight:600}
 .pal.act::before{content:"⚙ ";color:#3fc1a5}
+.var{display:inline-block;margin-left:14px;padding:2px 8px;border-radius:6px;border:2px solid #3fc1a5;font-size:17px;color:#3fc1a5}
+.var.change{background:#3fc1a5;color:#06241d}
 .slot.change{background:#3fc1a5 !important;color:#06241d !important}
 .pal.out::before{content:"■ ";color:var(--accent)}
 .pal:hover{border-color:var(--accent)}
@@ -261,17 +263,22 @@ const ACTIVITES = [
     nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [6, 7, 9]]
   },
   {
-    id: "multiple7",
+    id: "multiple7-i",
     titre: "Activité 5 — Multiple de 7 (division euclidienne)",
     consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 7, " +
               "en faisant la division euclidienne de n par 7.",
+    largeurDepart: 290,
+    // l'état de la machine : n (ne change jamais), i (variable de calcul), q (nombre de soustractions)
+    variables: ["i"],
+    etatInitial: n => ({ n }),
     conditions: [
-      { key: "sup7", texte: "n ≥ 7", test: n => n >= 7 },
-      { key: "zero", texte: "n = 0", test: n => n === 0 }
+      { key: "i7", texte: "i ≥ 7", test: e => e.i == null ? null : e.i >= 7 },
+      { key: "i0", texte: "i = 0", test: e => e.i == null ? null : e.i === 0 }
     ],
-    // blocs Action : ils modifient n, puis la machine continue
+    // blocs Action : ils modifient i, puis la machine continue
     actions: [
-      { key: "moins7", texte: "n prend la valeur n − 7", f: n => n - 7 }
+      { key: "in", texte: "i prend la valeur n", f: e => ({ ...e, i: e.n, q: 0 }) },
+      { key: "imoins7", texte: "i prend la valeur i\u00a0−\u00a07", f: e => e.i == null ? null : ({ ...e, i: e.i - 7, q: (e.q || 0) + 1 }) }
     ],
     sorties: [
       { key: "oui", texte: "n est un multiple de 7" },
@@ -279,7 +286,7 @@ const ACTIVITES = [
     ],
     attendu: n => (n % 7 === 0 ? "oui" : "non"),
     // affiché quand la machine a donné la bonne réponse : n = 7 × q + r
-    bilan: (n, q, r) => `Division euclidienne : ${n} = 7 × ${q} + ${r}.`,
+    bilan: (n, e) => e.i == null || e.q == null ? "" : `Division euclidienne : ${n} = 7 × ${e.q} + ${e.i}.`,
     nombres: [21, 30, 49, 15, 63, 50, 6, 84]
   }
 ];
@@ -444,6 +451,13 @@ function itemPalette(type, key, texte){
 function texteBloc(b){
   if (b.type === "start"){
     const i = b.val ?? nCourant;
+    if (act.variables){
+      const vars = act.variables.map(x => {
+        const val = b.cur ? b.cur[x] : undefined;
+        return `<span class="var${val != null ? " change" : ""}">${x} = ${val != null ? val : "?"}</span>`;
+      }).join("");
+      return `${act.entree || "n ="} <span class="slot${i != null ? " plein" : ""}">${i != null ? aff(act.nombres[i]) : ""}</span>${vars}`;
+    }
     const contenu = b.cur != null ? aff(b.cur) : (i != null ? aff(act.nombres[i]) : "");
     return `${act.entree || "n ="} <span class="slot${i != null ? " plein" : ""}${b.cur != null && b.cur !== act.nombres[i] ? " change" : ""}">${contenu}</span>`;
   }
@@ -794,7 +808,7 @@ async function executer(i, vitesse, token){
   const start = blocks.find(b => b.type === "start");
   if (!start) return "nodebut";
   start.val = i;
-  let cur = start, pas = 0, v = n, nbActions = 0;
+  let cur = start, pas = 0, v = act.etatInitial ? act.etatInitial(n) : n, nbActions = 0;
   const visites = {}, dejaVu = new Set();
   // la machine accélère quand elle repasse plusieurs fois par les mêmes blocs (boucle)
   const delai = b => vitesse * ((visites[b.id] || 0) > 2 ? 0.35 : 1);
@@ -810,19 +824,23 @@ async function executer(i, vitesse, token){
     if (cur.type === "out"){
       const bon = cur.key === act.attendu(n);
       cur.lit = false; cur.res = bon ? "ok" : "ko"; majEtats();
-      if (bon && act.bilan) dernierBilan = act.bilan(n, nbActions, v);
+      if (bon && act.bilan) dernierBilan = act.variables ? act.bilan(n, v) : act.bilan(n, nbActions, v);
       return bon ? "ok" : "ko";
     }
     let port = "next";
     if (cur.type === "act"){
       const a = act.actions.find(a => a.key === cur.key);
-      v = a.f(v); nbActions++;
+      const nv = a.f(v);
+      if (nv == null){ cur.stuck = true; majEtats(); return "sansvaleur"; }
+      v = nv; nbActions++;
       start.cur = v; majEtats(); await attendre(delai(cur)/2);
       if (token !== runToken) return null;
     }
     if (cur.type === "cond"){
       const c = act.conditions.find(c => c.key === cur.key);
-      port = c.test(v) ? "oui" : "non";
+      const res = c.test(v);
+      if (res == null){ cur.stuck = true; majEtats(); return "sansvaleur"; }
+      port = res ? "oui" : "non";
       cur.portLit = port; majEtats(); await attendre(delai(cur)/2);
       if (token !== runToken) return null;
     }
@@ -843,6 +861,7 @@ function texteResultat(i, r){
   if (r === "ok") return `✔ Pour ${n}, ta machine donne la bonne réponse.` + (dernierBilan ? " " + dernierBilan : "");
   if (r === "ko") return `✘ Pour ${n}, ta machine se trompe !`;
   if (r === "bloque") return `⚠ Pour ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
+  if (r === "sansvaleur") return `⚠ Pour ${n}, la machine utilise ${(act.variables || ["une variable"]).join(", ")} alors qu'elle n'a pas encore de valeur (bloc en orange) !`;
   if (r === "nodebut") return "⚠ Ta machine n'a pas de bloc Début : glisse-le depuis le menu.";
   return `⚠ Pour ${n}, la machine tourne en rond : elle repasse au même endroit sans que n change (bloc en orange) !`;
 }

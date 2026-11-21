@@ -25,11 +25,11 @@ On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lance
 - Fin : « ABC est rectangle en A / en B / en C », « ABC n'est pas rectangle »
 
 ## Activité 5 — Multiple de 7 (division euclidienne)
-- Entrée : `n = [   ]`
-- Conditions : « n ≥ 7 », « n = 0 »
-- Action (nouveau bloc) : « n prend la valeur n − 7 » — permet de faire une **boucle**
+- Entrée : `n = [   ]` (n ne change jamais)
+- Actions (nouveaux blocs) : « i prend la valeur n », « i prend la valeur i − 7 » — permettent de faire une **boucle**
+- Conditions : « i ≥ 7 », « i = 0 »
 - Fin : « n est un multiple de 7 », « n n'est pas un multiple de 7 »
-- Pendant la vérification, la valeur de n change dans la case ; à la fin, le jeu affiche la division euclidienne (ex. 30 = 7 × 4 + 2).
+- Pendant la vérification, la valeur de i s'affiche à côté de n ; à la fin, le jeu affiche la division euclidienne (ex. 30 = 7 × 4 + 2).
 
 ## Comment jouer
 - Glisser un bloc de la palette dans la zone (ou le toucher).
