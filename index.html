@@ -331,9 +331,13 @@ const ACTIVITES = [
     valide: (t, e, fin) => {
       const att = ({ a: "plus", b: "moinsB", c: "moins" })[t.hyp] || "nc";
       if (fin !== att) return false;
-      if (fin === "plus" && e.eq !== "a") return "etape";
-      if (fin === "moins" && !(e.eq === "c" && e.isoleC)) return "etape";
-      if (fin === "moinsB" && !(e.eq === "b" && e.isoleB)) return "etape";
+      // l'égalité de Pythagore est indispensable : sans elle, la réponse est fausse
+      if (fin === "plus" && e.eq !== "a") return false;
+      if (fin === "moins" && e.eq !== "c") return false;
+      if (fin === "moinsB" && e.eq !== "b") return false;
+      // la soustraction (a² = …) peut être sautée : le raisonnement tient, mais il manque une étape (orange)
+      if (fin === "moins" && !e.isoleC) return "etape";
+      if (fin === "moinsB" && !e.isoleB) return "etape";
       return true;
     },
     // quand la machine arrive sur une Fin de calcul : égalité avec les valeurs, terme sous la racine, puis valeur de a
@@ -353,7 +357,7 @@ const ACTIVITES = [
       return `a = ${rac(`${x}² ${op} ${y}²`)} = ${rac(sq)} = ${fr(Math.sqrt(sq))}.`;
     },
     nombres: [{ b: 3, c: 4, hyp: "a" }, { b: 6, c: 10, hyp: "c" }, { b: 13, c: 5, hyp: "b" }, { b: 4, c: 6, hyp: null, aDessin: 5 },
-              { b: 9, c: 15, hyp: "c" }, { b: 10, c: 6, hyp: "b" }, { b: 6, c: 8, hyp: "a" }, { b: 5, c: 7, hyp: null, aDessin: 6.2 }]
+              { b: 15, c: 9, hyp: "b" }, { b: 10, c: 6, hyp: "b" }, { b: 6, c: 8, hyp: "a" }, { b: 5, c: 7, hyp: null, aDessin: 6.2 }]
   },
   {
     id: "pythagore-direct",
@@ -1118,7 +1122,7 @@ function texteResultat(i, r){
   if (r === "ok") return `✔ Pour ${n}, ta machine donne la bonne réponse.` + (dernierBilan ? " " + dernierBilan : "");
   if (r === "ko") return `✘ Pour ${n}, ta machine se trompe !`;
   if (r === "bloque") return `⚠ Pour ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
-  if (r === "etape") return `⚠ Pour ${n}, ta machine arrive à la bonne conclusion, mais il manque une étape de calcul ou elle n'est pas dans le bon ordre (en orange).`;
+  if (r === "etape") return `⚠ Pour ${n}, ta machine trouve la bonne réponse, mais il manque une étape dans le raisonnement : l'égalité qui isole a² (en orange).`;
   if (r === "sansvaleur") return `⚠ Pour ${n}, la machine utilise ${(act.variables || ["une variable"]).join(", ")} alors qu'elle n'a pas encore de valeur (bloc en orange) !`;
   if (r === "nodebut") return "⚠ Ta machine n'a pas de bloc Début : glisse-le depuis le menu.";
   return `⚠ Pour ${n}, la machine tourne en rond : elle repasse au même endroit sans que n change (bloc en orange) !`;
@@ -1140,7 +1144,7 @@ async function testerTous(){
   stopRun(); const token = runToken;
   if (!blocks.some(b => b.type === "start")){ msg(texteResultat(0, "nodebut"), "warn"); return; }
   document.querySelectorAll(".num").forEach(b => b.classList.remove("ok","ko","etape","cur"));
-  let erreurs = 0;
+  let erreurs = 0, etapes = 0;
   for (let n = 0; n < act.nombres.length; n++){
     const btn = document.querySelector(`.num[data-n="${n}"]`);
     document.querySelectorAll(".num").forEach(b => b.classList.remove("cur")); btn.classList.add("cur");
@@ -1148,12 +1152,15 @@ async function testerTous(){
     const r = await executer(n, 280, token);
     if (r === null) return;
     btn.classList.add(r === "ok" ? "ok" : r === "etape" ? "etape" : "ko");
-    if (r !== "ok") erreurs++;
+    if (r === "etape") etapes++;
+    else if (r !== "ok") erreurs++;
     await attendre(450);
     if (token !== runToken) return;
   }
   document.querySelectorAll(".num").forEach(b => b.classList.remove("cur"));
-  if (erreurs === 0){
+  if (erreurs === 0 && etapes > 0){
+    msg(`⚠ Ta machine trouve toujours la bonne réponse, mais il manque une étape dans le raisonnement pour ${etapes} valeur${etapes > 1 ? "s" : ""} (en orange).`, "warn");
+  } else if (erreurs === 0){
     msg("✔ Ta machine donne la bonne réponse pour toutes les valeurs !", "ok");
     $("#bravoTxt").textContent = "Ta machine de vérification fonctionne pour toutes les valeurs testées.";
     $("#bravo").style.display = "flex";
