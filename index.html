@@ -329,8 +329,7 @@ const ACTIVITES = [
       { key: "non", texte: "n n'est pas un multiple de 10" }
     ],
     attendu: n => (n % 10 === 0 ? "oui" : "non"),
-    // une valeur par chemin possible dans le logigramme
-    nombres: [30, 45]
+    nombres: [30, 45, 7, 100, 250, 81, 2020, 15]
   },
   {
     id: "multiple5",
@@ -346,8 +345,7 @@ const ACTIVITES = [
     ],
     // bonne réponse attendue pour un nombre n
     attendu: n => (n % 5 === 0 ? "oui" : "non"),
-    // chemins : unités 0 → multiple ; unités 5 → multiple ; ni 0 ni 5 → pas multiple
-    nombres: [20, 35, 47]
+    nombres: [20, 35, 47, 5, 130, 58, 2025, 101]
   },
   {
     id: "multiple3",
@@ -441,7 +439,8 @@ const ACTIVITES = [
       const sq = op === "+" ? x*x + y*y : x*x - y*y;
       return `a = ${rac(`${x}² ${op} ${y}²`)} = ${rac(sq)} = ${fr(Math.sqrt(sq))}.`;
     },
-    nombres: [{ b: 3, c: 4, hyp: "a" }, { b: 6, c: 10, hyp: "c" }, { b: 13, c: 5, hyp: "b" }, { b: 4, c: 6, hyp: null, aDessin: 5 }]
+    nombres: [{ b: 3, c: 4, hyp: "a" }, { b: 6, c: 10, hyp: "c" }, { b: 13, c: 5, hyp: "b" }, { b: 4, c: 6, hyp: null, aDessin: 5 },
+              { b: 15, c: 9, hyp: "b" }, { b: 10, c: 6, hyp: "b" }, { b: 6, c: 8, hyp: "a" }, { b: 5, c: 7, hyp: null, aDessin: 6.2 }]
   },
   {
     id: "pythagore-direct",
@@ -465,8 +464,8 @@ const ACTIVITES = [
     ],
     attendu: t => (t[0] === 90 ? "egal" : t[1] === 90 ? "egalB" : t[2] === 90 ? "egalC" : "nc"),
     // mesures d'angles affichées sur certaines figures (index de la figure → sommets)
-    anglesAffiches: { 3: ["A"] },
-    nombres: [[90, 30, 60], [40, 90, 50], [30, 60, 90], [100, 40, 40]]
+    anglesAffiches: { 5: ["A"], 7: ["C"] },
+    nombres: [[90, 30, 60], [40, 90, 50], [60, 60, 60], [90, 45, 45], [30, 60, 90], [100, 40, 40], [90, 20, 70], [50, 50, 80]]
   },
   {
     id: "pythagore-calculs",
@@ -523,8 +522,7 @@ const ACTIVITES = [
         ? `${g}² = ${gg} et ${x}² + ${y}² = ${ss} : ${g}² ≠ ${x}² + ${y}², donc d'après la contraposée du théorème de Pythagore, ABC n'est pas rectangle.`
         : `${g}² = ${gg} et ${x}² + ${y}² = ${ss} : ${g}² = ${x}² + ${y}², donc d'après la réciproque du théorème de Pythagore, ABC est rectangle.`;
     },
-    // chemins : plus grand côté BC, AC ou AB, puis rectangle ou non → 6 chemins
-    nombres: [[3, 4, 5], [5, 6, 7.8], [6, 10, 8], [5, 8, 6], [5, 3, 4], [9, 6, 7]]
+    nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [9, 6, 7]]
   },
   {
     id: "pythagore-rc",
@@ -547,7 +545,7 @@ const ACTIVITES = [
       { key: "nonrect", texte: "ABC n'est pas rectangle" }
     ],
     attendu: t => egalite(t[2], t[0], t[1]) ? "rectA" : egalite(t[1], t[0], t[2]) ? "rectB" : egalite(t[0], t[1], t[2]) ? "rectC" : "nonrect",
-    nombres: [[3, 4, 5], [6, 10, 8], [5, 3, 4], [5, 6, 7.8]]
+    nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [6, 7, 9]]
   },
   {
     id: "multiple7-i",
@@ -573,8 +571,7 @@ const ACTIVITES = [
     attendu: n => (n % 7 === 0 ? "oui" : "non"),
     // affiché quand la machine a donné la bonne réponse : n = 7 × q + r
     bilan: (n, e) => e.r == null || e.q == null ? "" : `Division euclidienne : ${n} = 7 × ${e.q} + ${e.r}.`,
-    // chemins : avec ou sans tour de boucle, puis r = 0 ou non
-    nombres: [21, 30, 6, 0]
+    nombres: [21, 30, 49, 15, 63, 50, 6, 84]
   }
 ];
 const aff = v => act.affiche ? act.affiche(v) : String(v);
