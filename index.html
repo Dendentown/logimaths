@@ -42,8 +42,8 @@ svg#links path.hit:hover + path.vis{stroke:var(--ko)}
 .block.dragging{cursor:grabbing;z-index:5}
 .block .face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;transition:background .25s,color .25s,box-shadow .25s,border-color .25s}
 /* départ */
-.block.start{width:170px;height:56px}
-.block.start .face{background:#2d3f73;border:3px solid var(--accent);border-radius:28px;font-size:20px;font-weight:700;font-family:ui-monospace,Consolas,monospace}
+.block.start{width:190px;height:60px}
+.block.start .face{background:#2d3f73;border:3px solid var(--accent);border-radius:30px;font-size:20px;font-weight:700;font-family:ui-monospace,Consolas,monospace}
 /* condition (losange) */
 .block.cond{width:240px;height:150px}
 .block.cond .bord,.block.cond .face{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
@@ -76,6 +76,11 @@ svg#links path.hit:hover + path.vis{stroke:var(--ko)}
 footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16px;display:flex;flex-direction:column;gap:8px}
 .ligne{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ligne .lab{font-size:13px;color:var(--muted);margin-right:4px}
+.slot{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:36px;margin-left:8px;border:3px dashed var(--accent);border-radius:8px;background:rgba(0,0,0,.25);color:var(--txt);padding:0 8px;transition:all .15s}
+.slot.plein{border-style:solid;background:#101a36}
+.slot.survol{background:var(--accent);color:#1b1b1b;transform:scale(1.12)}
+.block.start.lit .slot{background:#fff;color:#111;border-color:#111}
+.num{touch-action:none;user-select:none;cursor:grab}
 .num{min-width:52px;font-family:ui-monospace,Consolas,monospace;font-size:16px;font-weight:700;background:var(--block);color:var(--txt);border:2px solid var(--blockb);border-radius:8px;padding:6px 10px;cursor:pointer}
 .num:hover{border-color:var(--accent)}
 .num.ok{background:var(--ok);border-color:var(--ok);color:#06240f}
@@ -124,11 +129,14 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
 
 <footer>
   <div class="ligne">
-    <span class="lab">Remplace « … » par :</span>
+    <span class="lab">Glisse un nombre dans la case :</span>
     <span id="nombres" class="ligne"></span>
-    <button class="btn main" id="btnTous">▶ Tester tous les nombres</button>
   </div>
-  <div id="msg">Construis ta machine, puis choisis un nombre pour la tester.</div>
+  <div class="ligne">
+    <button class="btn main" id="btnLancer">▶ Lancer la vérification</button>
+    <button class="btn" id="btnTous">⏩ Tester tous les nombres</button>
+  </div>
+  <div id="msg">Construis ta machine, glisse un nombre dans la case, puis lance la vérification.</div>
 </footer>
 
 <div id="ghost"></div>
@@ -143,7 +151,7 @@ const ACTIVITES = [
     id: "multiple5",
     titre: "Activité 1 — Multiple de 5",
     consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 5. " +
-              "Place les blocs, relie-les avec des flèches, puis teste ta machine avec les nombres.",
+              "Place les blocs, relie-les avec des flèches, glisse un nombre dans la case et lance la vérification.",
     conditions: [
       { key: "u0", texte: "Le chiffre des unités de n est 0", test: n => n % 10 === 0 },
       { key: "u5", texte: "Le chiffre des unités de n est 5", test: n => n % 10 === 5 }
@@ -163,7 +171,7 @@ const DIM = { start:{w:170,h:56}, cond:{w:240,h:150}, out:{w:210,h:68} };
 const VITESSE = 550;
 
 /* ===================== État ===================== */
-let act, blocks, links, nextId, selPort = null, runToken = 0;
+let nCourant = null, act, blocks, links, nextId, selPort = null, runToken = 0;
 const $ = s => document.querySelector(s);
 const ws = $("#ws"), zone = $("#zone"), linksG = $("#linksG");
 
@@ -202,10 +210,10 @@ function chargerActivite(i){
   act.nombres.forEach(n => {
     const b = document.createElement("button");
     b.className = "num"; b.textContent = n; b.dataset.n = n;
-    b.onclick = () => testerUn(n);
+    b.addEventListener("pointerdown", e => dragNombre(e, n));
     nb.appendChild(b);
   });
-  charger(); rendu(); effacerEtats();
+  nCourant = null; charger(); rendu(); effacerEtats();
 }
 
 function itemPalette(type, key, texte){
@@ -217,7 +225,7 @@ function itemPalette(type, key, texte){
 
 /* ===================== Rendu ===================== */
 function texteBloc(b){
-  if (b.type === "start") return "n = " + (b.val ?? "…");
+  if (b.type === "start"){ const v = b.val ?? nCourant; return `n = <span class="slot${v != null ? " plein" : ""}">${v ?? ""}</span>`; }
   if (b.type === "cond") return act.conditions.find(c => c.key === b.key)?.texte ?? "?";
   return act.sorties.find(s => s.key === b.key)?.texte ?? "?";
 }
@@ -370,6 +378,40 @@ ws.addEventListener("pointerdown", e => {
   }
 });
 
+function dragNombre(e, n){
+  e.preventDefault(); stopRun();
+  const g = $("#ghost"); g.textContent = n;
+  const x0 = e.clientX, y0 = e.clientY; let bouge = false;
+  const dansCase = ev => {
+    const s = ws.querySelector(".block.start"); if (!s) return false;
+    const r = s.getBoundingClientRect(), m = 25;
+    return ev.clientX > r.left - m && ev.clientX < r.right + m && ev.clientY > r.top - m && ev.clientY < r.bottom + m;
+  };
+  const move = ev => {
+    if (!bouge && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 6) return;
+    bouge = true; g.style.display = "block";
+    g.style.left = (ev.clientX - 20) + "px"; g.style.top = (ev.clientY - 18) + "px";
+    ws.querySelector(".slot")?.classList.toggle("survol", dansCase(ev));
+  };
+  const up = ev => {
+    window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up);
+    g.style.display = "none";
+    // un simple toucher place aussi le nombre dans la case (pratique sur tablette)
+    if (!bouge || dansCase(ev)) placerNombre(n);
+    else majEtats();
+  };
+  window.addEventListener("pointermove", move); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
+}
+function placerNombre(n){
+  nCourant = n; effacerEtats();
+  document.querySelectorAll(".num").forEach(b => b.classList.toggle("cur", b.dataset.n == n));
+  msg(`n = ${n}. Clique sur « Lancer la vérification ».`, "");
+}
+function lancer(){
+  if (nCourant == null){ msg("⚠ Glisse d'abord un nombre dans la case « n = ».", "warn"); return; }
+  testerUn(nCourant);
+}
+
 function supprimerBloc(id){
   stopRun();
   blocks = blocks.filter(b => b.id !== id);
@@ -387,7 +429,7 @@ function msg(t, cls){ const m = $("#msg"); m.innerHTML = t; m.className = cls ||
 function effacerEtats(){
   blocks.forEach(b => { if (b.type === "start") delete b.val; });
   links.forEach(l => delete l.lit);
-  document.querySelectorAll(".num").forEach(n => n.classList.remove("ok","ko","cur"));
+  document.querySelectorAll(".num").forEach(x => { x.classList.remove("ok","ko"); x.classList.toggle("cur", x.dataset.n == nCourant); });
   majEtats();
 }
 function majEtats(){
@@ -397,7 +439,7 @@ function majEtats(){
     el.classList.toggle("ok", b.res === "ok");
     el.classList.toggle("ko", b.res === "ko");
     el.classList.toggle("stuck", !!b.stuck);
-    if (b.type === "start") el.querySelector(".face").textContent = texteBloc(b);
+    if (b.type === "start") el.querySelector(".face").innerHTML = texteBloc(b);
     el.querySelectorAll(".plabel").forEach(lb => lb.classList.toggle("lit", b.portLit === lb.dataset.port));
   });
   dessinerLiens();
@@ -485,6 +527,7 @@ async function testerTous(){
 ACTIVITES.forEach((a, i) => { const o = document.createElement("option"); o.value = i; o.textContent = a.titre; $("#choixAct").appendChild(o); });
 $("#choixAct").onchange = e => { stopRun(); selPort = null; chargerActivite(+e.target.value); };
 $("#btnTous").onclick = testerTous;
+$("#btnLancer").onclick = lancer;
 $("#btnVider").onclick = () => { if (confirm("Effacer tout le logigramme ?")){ stopRun(); selPort = null; etatInitial(); apresModif(); msg("Logigramme effacé.", ""); } };
 $("#btnFermer").onclick = () => { $("#bravo").style.display = "none"; };
 chargerActivite(0);
