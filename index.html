@@ -300,48 +300,58 @@ const ACTIVITES = [
               "Construis une machine qui permet de retrouver la longueur du troisième côté a.",
     entree: "Le triangle :",
     largeurDepart: 420, hauteurDepart: 146,
-    // chaque valeur : longueurs b et c connues, hyp = côté hypoténuse ("a", "c") ou null si le triangle n'est pas rectangle
+    // chaque valeur : longueurs b et c connues, hyp = côté hypoténuse ("a", "b", "c") ou null si le triangle n'est pas rectangle
     affiche: t => figureLongueur(t),
     nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
     etatInitial: t => ({ t }),
     conditions: [
       { key: "rect", texte: "Le triangle est rectangle", test: e => e.t.hyp != null },
-      { key: "ahyp", texte: "a est l'hypoténuse", test: e => e.t.hyp === "a" }
+      { key: "ahyp", texte: "a est l'hypoténuse", test: e => e.t.hyp === "a" },
+      { key: "chyp", texte: "c est l'hypoténuse", test: e => e.t.hyp === "c" },
+      { key: "bhyp", texte: "b est l'hypoténuse", test: e => e.t.hyp === "b" }
     ],
     // les actions écrivent les étapes du calcul ; la machine vérifie qu'elles sont faites dans le bon ordre
     actions: [
       { key: "eqA", texte: "c² + b² = a²", f: e => ({ ...e, eq: "a" }) },
       { key: "eqC", texte: "a² + b² = c²", f: e => ({ ...e, eq: "c" }) },
-      { key: "isole", texte: "a² = c² − b²", f: e => ({ ...e, isole: e.eq === "c" }) }
+      { key: "isole", texte: "a² = c² − b²", f: e => ({ ...e, isoleC: e.eq === "c" }) },
+      { key: "eqB", texte: "a² + c² = b²", f: e => ({ ...e, eq: "b" }) },
+      { key: "isoleB", texte: "a² = b² − c²", f: e => ({ ...e, isoleB: e.eq === "b" }) }
     ],
     sorties: [
       { key: "moins", texte: "a = " + rac("c² − b²") },
+      { key: "moinsB", texte: "a = " + rac("b² − c²") },
       { key: "plus", texte: "a = " + rac("c² + b²") },
       { key: "nc", texte: "On ne peut pas utiliser le théorème de Pythagore" }
     ],
-    attendu: t => (t.hyp === "a" ? "plus" : t.hyp === "c" ? "moins" : "nc"),
+    attendu: t => ({ a: "plus", b: "moinsB", c: "moins" })[t.hyp] || "nc",
     // bonne fin, mais il faut aussi être passé par les bonnes égalités
     valide: (t, e, fin) => {
-      const att = t.hyp === "a" ? "plus" : t.hyp === "c" ? "moins" : "nc";
+      const att = ({ a: "plus", b: "moinsB", c: "moins" })[t.hyp] || "nc";
       if (fin !== att) return false;
       if (fin === "plus" && e.eq !== "a") return "etape";
-      if (fin === "moins" && !(e.eq === "c" && e.isole)) return "etape";
+      if (fin === "moins" && !(e.eq === "c" && e.isoleC)) return "etape";
+      if (fin === "moinsB" && !(e.eq === "b" && e.isoleB)) return "etape";
       return true;
     },
-    // quand la machine arrive sur une Fin de calcul : égalité avec les valeurs, puis valeur de a
+    // quand la machine arrive sur une Fin de calcul : égalité avec les valeurs, terme sous la racine, puis valeur de a
     detailFin: (t, fin) => {
       if (fin === "nc") return null;
-      const sq = fin === "plus" ? t.c*t.c + t.b*t.b : t.c*t.c - t.b*t.b;
-      const l1 = "a = " + rac(`${fr(t.c)}² ${fin === "plus" ? "+" : "−"} ${fr(t.b)}²`);
-      if (sq < 0) return [l1, "impossible : " + fr(t.c) + "² − " + fr(t.b) + "² < 0"];
+      const [x, op, y] = fin === "plus" ? [t.c, "+", t.b] : fin === "moins" ? [t.c, "−", t.b] : [t.b, "−", t.c];
+      const sq = op === "+" ? x*x + y*y : x*x - y*y;
+      const l1 = "a = " + rac(`${fr(x)}² ${op} ${fr(y)}²`);
+      if (sq < 0) return [l1, "impossible : " + fr(x) + "² − " + fr(y) + "² < 0"];
       const a = Math.sqrt(sq);
-      // étape intermédiaire : le terme sous la racine est calculé
       return [l1, "a = " + rac(fr(Math.round(sq * 100) / 100)), Number.isInteger(a) ? `a = ${a}` : `a ≈ ${fr(Math.round(a * 100) / 100)}`];
     },
-    bilan: (t, e) => t.hyp === "a" ? `a = ${rac(`${t.c}² + ${t.b}²`)} = ${rac(t.c*t.c + t.b*t.b)} = ${fr(Math.sqrt(t.c*t.c + t.b*t.b))}.`
-                   : t.hyp === "c" ? `a = ${rac(`${t.c}² − ${t.b}²`)} = ${rac(t.c*t.c - t.b*t.b)} = ${fr(Math.sqrt(t.c*t.c - t.b*t.b))}.` : "",
-    nombres: [{ b: 3, c: 4, hyp: "a" }, { b: 6, c: 10, hyp: "c" }, { b: 5, c: 12, hyp: "a" }, { b: 4, c: 6, hyp: null, aDessin: 5 },
-              { b: 9, c: 15, hyp: "c" }, { b: 8, c: 6, hyp: "a" }, { b: 7, c: 25, hyp: "c" }, { b: 5, c: 7, hyp: null, aDessin: 6.2 }]
+    bilan: (t, e) => {
+      if (!t.hyp) return "";
+      const [x, op, y] = t.hyp === "a" ? [t.c, "+", t.b] : t.hyp === "c" ? [t.c, "−", t.b] : [t.b, "−", t.c];
+      const sq = op === "+" ? x*x + y*y : x*x - y*y;
+      return `a = ${rac(`${x}² ${op} ${y}²`)} = ${rac(sq)} = ${fr(Math.sqrt(sq))}.`;
+    },
+    nombres: [{ b: 3, c: 4, hyp: "a" }, { b: 6, c: 10, hyp: "c" }, { b: 13, c: 5, hyp: "b" }, { b: 4, c: 6, hyp: null, aDessin: 5 },
+              { b: 9, c: 15, hyp: "c" }, { b: 10, c: 6, hyp: "b" }, { b: 6, c: 8, hyp: "a" }, { b: 5, c: 7, hyp: null, aDessin: 6.2 }]
   },
   {
     id: "pythagore-direct",
@@ -497,9 +507,11 @@ function figureAngles(t){
 // triangle dont les côtés sont nommés a, b, c ; a est inconnu (« a = ? »)
 function figureLongueur(t){
   const i = act.nombres.indexOf(t);
-  const a = t.hyp === "a" ? Math.sqrt(t.b*t.b + t.c*t.c) : t.hyp === "c" ? Math.sqrt(t.c*t.c - t.b*t.b) : t.aDessin;
+  const a = t.hyp === "a" ? Math.sqrt(t.b*t.b + t.c*t.c) : t.hyp === "c" ? Math.sqrt(t.c*t.c - t.b*t.b)
+          : t.hyp === "b" ? Math.sqrt(t.b*t.b - t.c*t.c) : t.aDessin;
   const P = sommets(a, t.b, t.c);
-  const droit = t.hyp === "a" ? "A" : t.hyp === "c" ? "C" : null;
+  // l'angle droit est en face de l'hypoténuse
+  const droit = ({ a: "A", b: "B", c: "C" })[t.hyp] || null;
   return dessinTriangle(P, { rot: ROTATIONS[i % 8], numero: i + 1, droit, sansSommets: true, W: 150, H: 112, pad: 28, ecart: 13,
     longueurs: [["B","C", "a=?", "#3d8bff"], ["A","C", "b=" + fr(t.b)], ["A","B", "c=" + fr(t.c)]] });
 }
