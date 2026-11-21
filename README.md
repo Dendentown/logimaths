@@ -18,7 +18,7 @@ On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lance
 - Les côtés sont notés a, b, c ; on connaît b et c, a = ? (en bleu sur la figure). Entrée : `Le triangle : [   ]`
 - Conditions : « Le triangle est rectangle », « a est l'hypoténuse »
 - Actions : « c² + b² = a² », « a² + b² = c² », « a² = c² − b² »
-- Fin : « a = √(c² − b²) », « a = √(c² + b²) », « On ne peut pas utiliser le théorème de Pythagore »
+- Fin : « a = √c² − b² », « a = √c² + b² » (barre de la racine sur tout le calcul), « On ne peut pas utiliser le théorème de Pythagore »
 - En arrivant sur une Fin de calcul, le bloc affiche l'égalité avec les valeurs puis la valeur de a.
 
 ## Activité 4 — Théorème de Pythagore

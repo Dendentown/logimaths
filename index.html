@@ -42,6 +42,9 @@ main{flex:1;display:flex;min-height:0}
 .var.change{background:#3fc1a5;color:#06241d}
 .block.out.calcul{height:auto !important;min-height:68px}
 .block.out.calcul .face{position:relative;flex-direction:column;gap:3px;padding:8px 12px}
+.rac{display:inline-flex;align-items:stretch;white-space:nowrap;vertical-align:bottom;line-height:1.15}
+.rac>i{font-style:normal;font-size:1.12em;line-height:1.05;margin-right:-1px}
+.rac>span{display:inline-block;border-top:1.6px solid currentColor;padding:0 3px 0 2px;line-height:1.15;margin-top:1px}
 .calc{font-size:15px;font-weight:800}
 .slot.change{background:#3fc1a5 !important;color:#06241d !important}
 .pal.out::before{content:"■ ";color:var(--accent)}
@@ -177,6 +180,8 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
 /* =====================================================================
    ACTIVITÉS — pour ajouter une activité, copier un objet de ce tableau.
    ===================================================================== */
+// racine carrée dont la barre couvre tout le calcul (sans parenthèses)
+function rac(x){ return `<span class="rac"><i>√</i><span>${x}</span></span>`; }
 // écriture décimale française (virgule)
 const fr = x => String(x).replace(".", ",");
 // h² = a² + b² ? (avec une petite tolérance pour les décimaux)
@@ -237,8 +242,8 @@ const ACTIVITES = [
       { key: "isole", texte: "a² = c² − b²", f: e => ({ ...e, isole: e.eq === "c" }) }
     ],
     sorties: [
-      { key: "moins", texte: "a = √(c² − b²)" },
-      { key: "plus", texte: "a = √(c² + b²)" },
+      { key: "moins", texte: "a = " + rac("c² − b²") },
+      { key: "plus", texte: "a = " + rac("c² + b²") },
       { key: "nc", texte: "On ne peut pas utiliser le théorème de Pythagore" }
     ],
     attendu: t => (t.hyp === "a" ? "plus" : t.hyp === "c" ? "moins" : "nc"),
@@ -254,13 +259,13 @@ const ACTIVITES = [
     detailFin: (t, fin) => {
       if (fin === "nc") return null;
       const sq = fin === "plus" ? t.c*t.c + t.b*t.b : t.c*t.c - t.b*t.b;
-      const l1 = `a = √(${fr(t.c)}² ${fin === "plus" ? "+" : "−"} ${fr(t.b)}²)`;
+      const l1 = "a = " + rac(`${fr(t.c)}² ${fin === "plus" ? "+" : "−"} ${fr(t.b)}²`);
       if (sq < 0) return [l1, "impossible : " + fr(t.c) + "² − " + fr(t.b) + "² < 0"];
       const a = Math.sqrt(sq);
       return [l1, Number.isInteger(a) ? `a = ${a}` : `a ≈ ${fr(Math.round(a * 100) / 100)}`];
     },
-    bilan: (t, e) => t.hyp === "a" ? `a = √(${t.c}² + ${t.b}²) = √${t.c*t.c + t.b*t.b} = ${fr(Math.sqrt(t.c*t.c + t.b*t.b))}.`
-                   : t.hyp === "c" ? `a = √(${t.c}² − ${t.b}²) = √${t.c*t.c - t.b*t.b} = ${fr(Math.sqrt(t.c*t.c - t.b*t.b))}.` : "",
+    bilan: (t, e) => t.hyp === "a" ? `a = ${rac(`${t.c}² + ${t.b}²`)} = ${rac(t.c*t.c + t.b*t.b)} = ${fr(Math.sqrt(t.c*t.c + t.b*t.b))}.`
+                   : t.hyp === "c" ? `a = ${rac(`${t.c}² − ${t.b}²`)} = ${rac(t.c*t.c - t.b*t.b)} = ${fr(Math.sqrt(t.c*t.c - t.b*t.b))}.` : "",
     nombres: [{ b: 3, c: 4, hyp: "a" }, { b: 6, c: 10, hyp: "c" }, { b: 5, c: 12, hyp: "a" }, { b: 4, c: 6, hyp: null, aDessin: 5 },
               { b: 9, c: 15, hyp: "c" }, { b: 8, c: 6, hyp: "a" }, { b: 7, c: 25, hyp: "c" }, { b: 5, c: 7, hyp: null, aDessin: 6.2 }]
   },
@@ -502,8 +507,7 @@ function itemPalette(type, key, texte){
   const d = document.createElement("div");
   d.className = "pal " + type; d.dataset.key = key;
   if (type === "cond") d.innerHTML = `<div class="bord"></div><div class="face">${texte}</div>`;
-  else if (type === "start") d.innerHTML = texte;
-  else d.textContent = texte;
+  else d.innerHTML = texte;
   d.addEventListener("pointerdown", e => dragPalette(e, type, key, texte));
   return d;
 }
