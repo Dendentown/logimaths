@@ -225,6 +225,7 @@ footer > .ligne:first-child{min-width:0;max-width:100%}
 #mChamps{flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px}
 #mChamps label{display:flex;align-items:center;gap:8px;font-size:15px;justify-content:space-between}
 #mChamps label > span{white-space:nowrap}
+#mChamps label > span.lib{white-space:normal}
 #mChamps input[type=number],#mChamps select{width:110px;font:inherit;font-size:16px;padding:6px 8px;border-radius:8px;border:2px solid var(--blockb);background:var(--block);color:var(--txt)}
 #mChamps .cases{display:flex;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 #mChamps .cases label{justify-content:flex-start;gap:4px}
@@ -234,6 +235,10 @@ footer > .ligne:first-child{min-width:0;max-width:100%}
 #mErreur{min-height:22px;margin:10px 0 4px;color:var(--warn);font-weight:700;font-size:14px}
 #modele .boutons{display:flex;gap:10px;justify-content:flex-end}
 @media (max-width:760px),(max-height:500px){ #btnModele .txt{display:none} #mApercu svg.fig{width:200px} #modele .carte{padding:12px 14px} }
+.angle{position:relative;display:inline-block;padding-top:.45em;line-height:1}
+.angle::before{content:"";position:absolute;left:2%;right:2%;top:0;height:.42em;background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpolyline points='2,19 50,3 98,19' fill='none' stroke='black' stroke-width='4'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpolyline points='2,19 50,3 98,19' fill='none' stroke='black' stroke-width='4'/%3E%3C/svg%3E") center/100% 100% no-repeat}
 </style>
 </head>
 <body>
@@ -617,10 +622,11 @@ const MODELES = {
     }
   },
   "pythagore-direct": {
-    champs: [{ k: "A", label: "Â =", type: "number", min: 1, max: 178, step: 1, def: 90, unite: "°" },
-             { k: "B", label: "B̂ =", type: "number", min: 1, max: 178, step: 1, def: 35, unite: "°" },
-             { k: "C", label: "Ĉ =", type: "number", min: 1, max: 178, step: 1, def: 55, unite: "°" },
-             { k: "montrer", label: "Écrire la mesure de l'angle sur la figure :", type: "cases", choix: ["A", "B", "C"], def: [] }],
+    // angles notés avec trois lettres (BAC, ABC, ACB), le chapeau couvre les trois lettres
+    champs: [{ k: "A", label: angle("BAC") + " =", type: "number", min: 1, max: 178, step: 1, def: 90, unite: "°" },
+             { k: "B", label: angle("ABC") + " =", type: "number", min: 1, max: 178, step: 1, def: 35, unite: "°" },
+             { k: "C", label: angle("ACB") + " =", type: "number", min: 1, max: 178, step: 1, def: 55, unite: "°" },
+             { k: "montrer", label: "Écrire la mesure de l'angle sur la figure :", type: "cases", choix: [["A", angle("BAC")], ["B", angle("ABC")], ["C", angle("ACB")]], def: [] }],
     construire: f => { const t = [nb(f.A), nb(f.B), nb(f.C)]; t.montrer = f.montrer || []; return t; },
     erreur: f => {
       const t = [nb(f.A), nb(f.B), nb(f.C)];
@@ -632,6 +638,8 @@ const MODELES = {
   "pythagore-calculs": { champs: COTES(["AB", "AC", "BC"], [6, 8, 10]), construire: f => [nb(f.AB), nb(f.AC), nb(f.BC)], erreur: f => erreurTriangle(nb(f.AB), nb(f.AC), nb(f.BC)) },
   "pythagore-rc": { champs: COTES(["AB", "AC", "BC"], [6, 8, 10]), construire: f => [nb(f.AB), nb(f.AC), nb(f.BC)], erreur: f => erreurTriangle(nb(f.AB), nb(f.AC), nb(f.BC)) }
 };
+// angle noté avec un chapeau qui couvre toutes les lettres (ex. ACB)
+function angle(l){ return `<span class="angle">${l}</span>`; }
 function lireModeles(){ try { return JSON.parse(localStorage.getItem("logimaths-modeles-" + act.id)) || []; } catch(_){ return []; } }
 function ecrireModeles(l){ try { localStorage.setItem("logimaths-modeles-" + act.id, JSON.stringify(l)); } catch(_){} }
 
@@ -819,9 +827,9 @@ function ouvrirModele(){
   const zone = $("#mChamps"); zone.innerHTML = "";
   M.champs.forEach(c => {
     let html;
-    if (c.type === "select") html = `<label data-k="${c.k}">${c.label} <select name="${c.k}">${c.choix.map(([v, t]) => `<option value="${v}"${v === c.def ? " selected" : ""}>${t}</option>`).join("")}</select></label>`;
-    else if (c.type === "cases") html = `<div data-k="${c.k}"><div style="font-size:14px;margin-bottom:4px">${c.label}</div><div class="cases">${c.choix.map(v => `<label><input type="checkbox" name="${c.k}" value="${v}"> ${v}</label>`).join("")}</div></div>`;
-    else html = `<label data-k="${c.k}">${c.label} <span><input type="number" name="${c.k}" value="${c.def}" min="${c.min ?? ""}" max="${c.max ?? ""}" step="${c.step ?? "any"}" inputmode="decimal"> ${c.unite || ""}</span></label>`;
+    if (c.type === "select") html = `<label data-k="${c.k}"><span class="lib">${c.label}</span> <select name="${c.k}">${c.choix.map(([v, t]) => `<option value="${v}"${v === c.def ? " selected" : ""}>${t}</option>`).join("")}</select></label>`;
+    else if (c.type === "cases") html = `<div data-k="${c.k}"><div style="font-size:14px;margin-bottom:4px">${c.label}</div><div class="cases">${c.choix.map(v => { const [val, txt] = Array.isArray(v) ? v : [v, v]; return `<label><input type="checkbox" name="${c.k}" value="${val}"> ${txt}</label>`; }).join("")}</div></div>`;
+    else html = `<label data-k="${c.k}"><span class="lib">${c.label}</span> <span><input type="number" name="${c.k}" value="${c.def}" min="${c.min ?? ""}" max="${c.max ?? ""}" step="${c.step ?? "any"}" inputmode="decimal"> ${c.unite || ""}</span></label>`;
     zone.insertAdjacentHTML("beforeend", html);
   });
   zone.querySelectorAll("input,select").forEach(el => el.addEventListener("input", majModele));
