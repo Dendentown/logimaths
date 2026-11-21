@@ -27,12 +27,19 @@ On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lance
 - Conditions : « Le triangle ABC est rectangle en A », « Le triangle ABC est rectangle en B », « Le triangle ABC est rectangle en C »
 - Fin : « BC² = AB² + AC² », « AC² = AB² + BC² », « AB² = AC² + BC² », « On ne peut pas conclure avec le théorème de Pythagore »
 
-## Activité 5 — Réciproque et contraposée du théorème de Pythagore
+## Activité 5 — Réciproque et contraposée, avec les calculs
+- Entrée : figure cotée du triangle ABC.
+- Conditions : « AB / AC / BC est le plus grand côté », « BC² = AB² + AC² », « AC² = AB² + BC² », « AB² = AC² + BC² »
+- Actions : « On calcule AB² », « On calcule AC² », « On calcule BC² », « On calcule AB² + AC² », « On calcule AB² + BC² », « On calcule AC² + BC² » — le détail du calcul s'affiche à côté du bloc, ligne par ligne en clignotant.
+- Fin : « ABC est rectangle en A / en B / en C », « ABC n'est pas rectangle »
+- Il faut tester l'égalité du plus grand côté (sinon faux) et avoir fait les deux calculs avant ce test (sinon étape manquante : orange).
+
+## Activité 6 — Réciproque et contraposée du théorème de Pythagore
 - On connaît les longueurs des côtés du triangle ABC (figures cotées).
 - Conditions : « BC² = AB² + AC² », « AC² = AB² + BC² », « AB² = AC² + BC² »
 - Fin : « ABC est rectangle en A / en B / en C », « ABC n'est pas rectangle »
 
-## Activité 6 — Multiple de 7 (division euclidienne)
+## Activité 7 — Multiple de 7 (division euclidienne)
 - Entrée : `n = [   ]` (n ne change jamais)
 - Actions (nouveaux blocs) : « r prend la valeur n », « r prend la valeur r − 7 » — permettent de faire une **boucle**
 - Conditions : « r ≥ 7 », « r = 0 »
