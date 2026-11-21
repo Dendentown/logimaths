@@ -104,9 +104,10 @@ body.cible .port.in{box-shadow:0 0 0 4px rgba(255,201,77,.45)}
 .plabel{position:absolute;font-size:calc(12px / var(--E,1));font-weight:800;color:var(--muted);pointer-events:none;transition:color .2s}
 .plabel.lit{color:#fff;text-shadow:0 0 6px #fff}
 .del{position:absolute;top:-10px;right:-10px;width:calc(28px / var(--E,1));height:calc(28px / var(--E,1));border-radius:50%;background:#c0392b;color:#fff;border:2px solid #fff;font-size:calc(18px / var(--E,1));font-weight:700;line-height:calc(23px / var(--E,1));text-align:center;cursor:pointer;z-index:4;display:none}
-.block:hover .del,.block.touch .del{display:block}
+.block.choisi .del{display:block}
+.block.choisi .face{outline:3px dashed #ff6b6b;outline-offset:4px}
+.block.cond.choisi{filter:drop-shadow(0 0 6px #ff6b6b)}
 .block.cond .del{top:10px;right:42px}
-@media (hover:none){ .block .del{display:block} }
 #ghost{position:fixed;pointer-events:none;z-index:50;opacity:.85;display:none;background:var(--block);border:2px dashed var(--accent);border-radius:10px;padding:8px 10px;font-size:13px;max-width:220px}
 footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16px;display:flex;flex-direction:column;gap:8px}
 .ligne{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -625,7 +626,7 @@ function rendu(){
   blocks.forEach(b => {
     const d = DIM[b.type];
     const el = document.createElement("div");
-    el.className = "block " + b.type; el.dataset.id = b.id;
+    el.className = "block " + b.type + (b.id === blocChoisi ? " choisi" : ""); el.dataset.id = b.id;
     el.style.left = b.x + "px"; el.style.top = b.y + "px";
     if (b.type === "start"){ el.style.width = d.w + "px"; el.style.height = d.h + "px"; }
     el.innerHTML = (b.type === "cond" ? '<div class="bord"></div>' : "") +
@@ -751,16 +752,28 @@ function relier(toId){
   msg("Flèche ajoutée.", "");
 }
 
+let blocChoisi = null;
+function choisirBloc(id){
+  blocChoisi = id;
+  ws.querySelectorAll(".block").forEach(x => x.classList.toggle("choisi", id != null && x.dataset.id == id));
+}
 function dragBloc(e, b, el){
   if (e.button !== undefined && e.button !== 0) return;
   stopRun();
   const p0 = coordWs(e), ox = p0.x - b.x, oy = p0.y - b.y;
   let bouge = false;
   el.setPointerCapture(e.pointerId);
-  if (e.pointerType === "touch"){ ws.querySelectorAll(".block.touch").forEach(x => x.classList.remove("touch")); el.classList.add("touch"); }
+  // appui prolongé sans bouger : le bloc est sélectionné et sa croix rouge apparaît
+  if (blocChoisi !== b.id) choisirBloc(null);
+  let appuiLong = false;
+  const tLong = setTimeout(() => {
+    appuiLong = true; choisirBloc(b.id);
+    try { navigator.vibrate && navigator.vibrate(15); } catch(_){}
+  }, 500);
   const move = ev => {
     const p = coordWs(ev);
     if (!bouge && Math.hypot(p.x - p0.x, p.y - p0.y) < 5) return;
+    clearTimeout(tLong);
     if (!bouge) effacerEtats();
     bouge = true; el.classList.add("dragging");
     b.x = p.x - ox; b.y = p.y - oy; borner(b);
@@ -768,10 +781,11 @@ function dragBloc(e, b, el){
     dessinerLiens();
   };
   const up = () => {
+    clearTimeout(tLong);
     el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up);
     el.classList.remove("dragging");
     if (bouge) sauver();
-    else if (selPort) relier(b.id);
+    else if (!appuiLong && selPort) relier(b.id);
   };
   el.addEventListener("pointermove", move); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
 }
@@ -898,7 +912,7 @@ function debutFleche(e, id, port){
 
 ws.addEventListener("pointerdown", e => {
   if (e.target === ws || e.target.closest("svg") && !e.target.classList.contains("hit")){
-    ws.querySelectorAll(".block.touch").forEach(x => x.classList.remove("touch"));
+    choisirBloc(null);
     const c = selPort && selPort.port !== "in" ? cibleProche(coordWs(e)) : null;
     if (c){ relier(c.id); return; }
     if (selPort){ selPort = null; rendu(); msg("", ""); }
@@ -962,6 +976,7 @@ function placeLibre(type){
 }
 
 function supprimerBloc(id){
+  if (blocChoisi === id) blocChoisi = null;
   stopRun();
   blocks = blocks.filter(b => b.id !== id);
   links = links.filter(l => l.from !== id && l.to !== id);
@@ -1142,6 +1157,9 @@ let tRedim = null;
 window.addEventListener("resize", () => { clearTimeout(tRedim); tRedim = setTimeout(appliquerEchelle, 150); });
 
 document.addEventListener("dragstart", e => e.preventDefault());
+// toucher n'importe où ailleurs désélectionne le bloc (la croix rouge disparaît)
+document.addEventListener("pointerdown", e => { if (blocChoisi != null && !(e.target.closest && e.target.closest(".block.choisi"))) choisirBloc(null); }, true);
+document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest("#ws")) e.preventDefault(); });
 document.addEventListener("selectstart", e => { if (e.target.closest && e.target.closest("#palette,#ws,#nombres")) e.preventDefault(); });
 ACTIVITES.forEach((a, i) => { const o = document.createElement("option"); o.value = i; o.textContent = a.titre; $("#choixAct").appendChild(o); });
 $("#choixAct").onchange = e => { stopRun(); selPort = null; chargerActivite(+e.target.value); };
