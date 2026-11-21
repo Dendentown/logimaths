@@ -68,6 +68,7 @@ svg#links path.hit:hover + path.vis{stroke:var(--ko)}
 .port:hover{transform:scale(1.15)}
 .port.sel{animation:pulse .8s infinite alternate;background:#fff}
 .port.used{background:#9fb2ea}
+body.cible .port.in{box-shadow:0 0 0 4px rgba(255,201,77,.45)}
 @keyframes pulse{from{box-shadow:0 0 0 0 rgba(255,201,77,.9)}to{box-shadow:0 0 0 10px rgba(255,201,77,0)}}
 .plabel{position:absolute;font-size:12px;font-weight:800;color:var(--muted);pointer-events:none;transition:color .2s}
 .plabel.lit{color:#fff;text-shadow:0 0 6px #fff}
@@ -229,7 +230,7 @@ function chargerActivite(i){
   pal.insertAdjacentHTML("beforeend",
     `<div class="aide"><b>Comment faire ?</b><br>
      • Glisse un bloc dans la zone (ou touche-le).<br>
-     • Touche un <span style="color:var(--accent)">●</span> puis touche un bloc pour tracer une flèche.<br>
+     • Touche un <span style="color:var(--accent)">●</span> de sortie (en bas ou à droite), puis le <span style="color:var(--accent)">●</span> d'entrée d'un bloc (en haut) pour tracer une flèche.<br>
      • Touche une flèche pour l'effacer.<br>
      • Le × supprime un bloc.<br>
      • Tu peux poser plusieurs fois une condition.<br>
@@ -266,6 +267,7 @@ function ports(b){
 }
 
 function rendu(){
+  document.body.classList.toggle("cible", !!(selPort && selPort.port !== "in"));
   document.querySelectorAll(".pal.out").forEach(p =>
     p.classList.toggle("pris", blocks.some(b => b.type === "out" && b.key === p.dataset.key)));
   ws.querySelectorAll(".block").forEach(e => e.remove());
@@ -293,6 +295,15 @@ function rendu(){
       }
     });
     if (b.type !== "start"){
+      const pin = document.createElement("div");
+      pin.className = "port in"; pin.dataset.port = "in"; pin.title = "Entrée du bloc";
+      pin.style.left = (d.w/2 - 12) + "px"; pin.style.top = "-12px";
+      if (links.some(l => l.to === b.id)) pin.classList.add("used");
+      if (selPort && selPort.id === b.id && selPort.port === "in") pin.classList.add("sel");
+      pin.addEventListener("pointerdown", e => { e.stopPropagation(); clicPort(b.id, "in"); });
+      el.appendChild(pin);
+    }
+    if (b.type !== "start"){
       const x = document.createElement("div");
       x.className = "del"; x.textContent = "×"; x.title = "Supprimer ce bloc";
       x.addEventListener("pointerdown", e => { e.stopPropagation(); supprimerBloc(b.id); });
@@ -311,7 +322,7 @@ function dessinerLiens(){
     if (!a || !t) return;
     const p = ports(a).find(p => p.name === l.port);
     const x1 = a.x + p.x, y1 = a.y + p.y;
-    const x2 = t.x + DIM[t.type].w/2, y2 = t.y - 2;
+    const x2 = t.x + DIM[t.type].w/2, y2 = t.y - 13;
     const k = Math.max(50, Math.min(140, Math.hypot(x2-x1, y2-y1) / 2));
     const dpath = `M${x1} ${y1} C${x1 + p.dir[0]*k} ${y1 + p.dir[1]*k}, ${x2} ${y2 - k}, ${x2} ${y2}`;
     const hit = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -334,15 +345,23 @@ function borner(b){
 
 function clicPort(id, port){
   stopRun();
+  // une sortie est sélectionnée et on touche un point d'entrée : la flèche se colle
+  if (port === "in" && selPort && selPort.port !== "in") { relier(id); return; }
+  // une entrée est sélectionnée et on touche un point de sortie : la flèche se colle aussi
+  if (port !== "in" && selPort && selPort.port === "in") {
+    const cible = selPort.id; selPort = { id, port }; relier(cible); return;
+  }
   if (selPort && selPort.id === id && selPort.port === port) selPort = null;
   else selPort = { id, port };
   rendu();
-  if (selPort) msg("Touche maintenant le bloc vers lequel la flèche doit aller.", "");
+  if (selPort) msg(port === "in"
+    ? "Touche maintenant le point jaune de sortie (Oui, Non…) d'où part la flèche."
+    : "Touche maintenant le point jaune d'entrée du bloc où la flèche doit arriver.", "");
 }
 
 function relier(toId){
   const to = blocks.find(b => b.id === toId);
-  if (!selPort || to.type === "start" || toId === selPort.id) { selPort = null; rendu(); return; }
+  if (!selPort || selPort.port === "in" || to.type === "start" || toId === selPort.id) { selPort = null; rendu(); return; }
   links = links.filter(l => !(l.from === selPort.id && l.port === selPort.port));
   links.push({ from: selPort.id, port: selPort.port, to: toId });
   selPort = null; apresModif();
