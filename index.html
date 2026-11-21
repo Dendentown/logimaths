@@ -49,8 +49,9 @@ main{flex:1;display:flex;min-height:0}
 .egal .g{text-align:left}
 .egal .g:first-child,.egal .g:nth-child(3n+1){text-align:right}
 .egal .plein{grid-column:1 / 4;text-align:center}
-.calc.flash{animation:flashLigne .55s ease-out}
-@keyframes flashLigne{0%{background:#fff;color:#111;box-shadow:0 0 14px 4px rgba(255,255,255,.9)}60%{background:#fff;color:#111}100%{background:transparent;box-shadow:none}}
+.calc.flash{animation:flashLigne .9s ease-out}
+/* ce sont les lettres et les symboles qui clignotent en blanc (pas de fond) */
+@keyframes flashLigne{0%{opacity:0;color:#fff;text-shadow:0 0 6px #fff,0 0 12px #fff}20%{opacity:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #fff}40%{opacity:.25}60%{opacity:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #fff}100%{opacity:1;text-shadow:none}}
 .calc{font-size:15px;font-weight:800}
 .slot.change{background:#3fc1a5 !important;color:#06241d !important}
 .pal.out{border-radius:999px;padding-left:16px;padding-right:16px}
