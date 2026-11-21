@@ -34,6 +34,11 @@ main{flex:1;display:flex;min-height:0}
 .pal.cond:hover .bord{background:var(--accent)}
 .pal.start{border-color:var(--accent);border-radius:22px;text-align:center;font-family:ui-monospace,Consolas,monospace;font-weight:700;font-size:15px}
 .minislot{display:inline-block;width:34px;height:18px;border:2px dashed var(--accent);border-radius:4px;vertical-align:middle}
+.block.act{width:220px;height:62px}
+.block.act .face{background:var(--block);border:3px solid #3fc1a5;border-radius:4px;font-size:15px;font-weight:700;padding:0 10px}
+.pal.act{border-color:#3fc1a5;border-radius:4px;font-weight:600}
+.pal.act::before{content:"⚙ ";color:#3fc1a5}
+.slot.change{background:#3fc1a5 !important;color:#06241d !important}
 .pal.out::before{content:"■ ";color:var(--accent)}
 .pal:hover{border-color:var(--accent)}
 .pal.pris{opacity:.35;cursor:not-allowed;border-style:dashed}
@@ -254,6 +259,28 @@ const ACTIVITES = [
     ],
     attendu: t => egalite(t[2], t[0], t[1]) ? "rectA" : egalite(t[1], t[0], t[2]) ? "rectB" : egalite(t[0], t[1], t[2]) ? "rectC" : "nonrect",
     nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [6, 7, 9]]
+  },
+  {
+    id: "multiple7",
+    titre: "Activité 5 — Multiple de 7 (division euclidienne)",
+    consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 7, " +
+              "en faisant la division euclidienne de n par 7.",
+    conditions: [
+      { key: "sup7", texte: "n ≥ 7", test: n => n >= 7 },
+      { key: "zero", texte: "n = 0", test: n => n === 0 }
+    ],
+    // blocs Action : ils modifient n, puis la machine continue
+    actions: [
+      { key: "moins7", texte: "n prend la valeur n − 7", f: n => n - 7 }
+    ],
+    sorties: [
+      { key: "oui", texte: "n est un multiple de 7" },
+      { key: "non", texte: "n n'est pas un multiple de 7" }
+    ],
+    attendu: n => (n % 7 === 0 ? "oui" : "non"),
+    // affiché quand la machine a donné la bonne réponse : n = 7 × q + r
+    bilan: (n, q, r) => `Division euclidienne : ${n} = 7 × ${q} + ${r}.`,
+    nombres: [21, 30, 49, 15, 63, 50, 6, 84]
   }
 ];
 const aff = v => act.affiche ? act.affiche(v) : String(v);
@@ -340,11 +367,11 @@ const nom = v => act.nomEntree ? act.nomEntree(v) : "n = " + v;
 const Nom = v => { const t = nom(v); return t.charAt(0).toUpperCase() + t.slice(1); };
 
 /* ===================== Dimensions des blocs ===================== */
-const DIM = { start:{w:190,h:60}, cond:{w:240,h:150}, out:{w:210,h:68} };
+const DIM = { act:{w:220,h:62}, start:{w:190,h:60}, cond:{w:240,h:150}, out:{w:210,h:68} };
 const VITESSE = 550;
 
 /* ===================== État ===================== */
-let nCourant = null, act, blocks, links, nextId, selPort = null, runToken = 0;
+let dernierBilan = "", nCourant = null, act, blocks, links, nextId, selPort = null, runToken = 0;
 const $ = s => document.querySelector(s);
 const ws = $("#ws"), zone = $("#zone"), linksG = $("#linksG"), tmpG = $("#tmpG");
 let pointeur = null;
@@ -355,7 +382,7 @@ function etatInitial(){
 }
 function sauver(){
   // on n'enregistre pas les lumières du dernier test
-  const tmp = ["lit", "res", "stuck", "portLit", "val"];
+  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur"];
   try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId }, (k, v) => tmp.includes(k) ? undefined : v)); } catch(e){}
 }
 function charger(){
@@ -385,6 +412,10 @@ function chargerActivite(i){
   pal.appendChild(itemPalette("start", "debut", `${act.entree || "n ="} <span class="minislot"></span>`));
   pal.insertAdjacentHTML("beforeend", "<h3>Conditions</h3>");
   act.conditions.forEach(c => pal.appendChild(itemPalette("cond", c.key, c.texte)));
+  if (act.actions){
+    pal.insertAdjacentHTML("beforeend", "<h3>Actions</h3>");
+    act.actions.forEach(a => pal.appendChild(itemPalette("act", a.key, a.texte)));
+  }
   pal.insertAdjacentHTML("beforeend", "<h3>Fin</h3>");
   act.sorties.forEach(s => pal.appendChild(itemPalette("out", s.key, s.texte)));
   const nb = $("#nombres"); nb.innerHTML = "";
@@ -411,13 +442,18 @@ function itemPalette(type, key, texte){
 
 /* ===================== Rendu ===================== */
 function texteBloc(b){
-  if (b.type === "start"){ const i = b.val ?? nCourant; return `${act.entree || "n ="} <span class="slot${i != null ? " plein" : ""}">${i != null ? aff(act.nombres[i]) : ""}</span>`; }
+  if (b.type === "start"){
+    const i = b.val ?? nCourant;
+    const contenu = b.cur != null ? aff(b.cur) : (i != null ? aff(act.nombres[i]) : "");
+    return `${act.entree || "n ="} <span class="slot${i != null ? " plein" : ""}${b.cur != null && b.cur !== act.nombres[i] ? " change" : ""}">${contenu}</span>`;
+  }
   if (b.type === "cond") return act.conditions.find(c => c.key === b.key)?.texte ?? "?";
+  if (b.type === "act") return (act.actions || []).find(a => a.key === b.key)?.texte ?? "?";
   return act.sorties.find(s => s.key === b.key)?.texte ?? "?";
 }
 function ports(b){
   const d = DIM[b.type];
-  if (b.type === "start") return [{ name:"next", x:d.w/2, y:d.h, dir:[0,1] }];
+  if (b.type === "start" || b.type === "act") return [{ name:"next", x:d.w/2, y:d.h, dir:[0,1] }];
   if (b.type === "cond")  return [{ name:"oui", x:d.w/2, y:d.h, dir:[0,1], label:"Oui" },
                                   { name:"non", x:d.w, y:d.h/2, dir:[1,0], label:"Non" }];
   return [];
@@ -475,6 +511,17 @@ function rendu(){
   dessinerLiens(); dessinerTmp();
 }
 
+// courbe d'une flèche ; si elle remonte (boucle), elle passe sur le côté
+function cheminFleche(x1, y1, dir, x2, y2, a, t){
+  if (y2 < y1 - 20 && dir[1] === 1){
+    const gauche = Math.min(a.x, t.x) - 70;
+    const xs = gauche > 10 ? gauche : Math.max(a.x + DIM[a.type].w, t.x + DIM[t.type].w) + 70;
+    const ym = (y1 + y2) / 2;
+    return `M${x1} ${y1} C${x1} ${y1 + 70}, ${xs} ${y1 + 70}, ${xs} ${ym} C${xs} ${y2 - 70}, ${x2} ${y2 - 70}, ${x2} ${y2}`;
+  }
+  const k = Math.max(50, Math.min(140, Math.hypot(x2-x1, y2-y1) / 2));
+  return `M${x1} ${y1} C${x1 + dir[0]*k} ${y1 + dir[1]*k}, ${x2} ${y2 - k}, ${x2} ${y2}`;
+}
 function dessinerLiens(){
   linksG.innerHTML = "";
   links.forEach((l, i) => {
@@ -483,8 +530,7 @@ function dessinerLiens(){
     const p = ports(a).find(p => p.name === l.port);
     const x1 = a.x + p.x, y1 = a.y + p.y;
     const x2 = t.x + DIM[t.type].w/2, y2 = t.y - 13;
-    const k = Math.max(50, Math.min(140, Math.hypot(x2-x1, y2-y1) / 2));
-    const dpath = `M${x1} ${y1} C${x1 + p.dir[0]*k} ${y1 + p.dir[1]*k}, ${x2} ${y2 - k}, ${x2} ${y2}`;
+    const dpath = cheminFleche(x1, y1, p.dir, x2, y2, a, t);
     const hit = document.createElementNS("http://www.w3.org/2000/svg", "path");
     hit.setAttribute("d", dpath); hit.setAttribute("class", "hit");
     hit.addEventListener("pointerdown", e => { e.stopPropagation(); links.splice(i, 1); apresModif(); });
@@ -737,7 +783,7 @@ function majEtats(){
   dessinerLiens();
 }
 function reinitLumieres(){
-  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; });
+  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; });
   links.forEach(l => delete l.lit);
 }
 
@@ -748,39 +794,57 @@ async function executer(i, vitesse, token){
   const start = blocks.find(b => b.type === "start");
   if (!start) return "nodebut";
   start.val = i;
-  let cur = start, pas = 0;
+  let cur = start, pas = 0, v = n, nbActions = 0;
+  const visites = {}, dejaVu = new Set();
+  // la machine accélère quand elle repasse plusieurs fois par les mêmes blocs (boucle)
+  const delai = b => vitesse * ((visites[b.id] || 0) > 2 ? 0.35 : 1);
+  dernierBilan = "";
   cur.lit = true; majEtats(); await attendre(vitesse);
   while (true){
     if (token !== runToken) return null;
+    visites[cur.id] = (visites[cur.id] || 0) + 1;
+    // même bloc avec la même valeur de n : la machine ne s'arrêtera jamais
+    const etat = cur.id + "|" + JSON.stringify(v);
+    if (dejaVu.has(etat)){ cur.stuck = true; majEtats(); return "boucle"; }
+    dejaVu.add(etat);
     if (cur.type === "out"){
       const bon = cur.key === act.attendu(n);
       cur.lit = false; cur.res = bon ? "ok" : "ko"; majEtats();
+      if (bon && act.bilan) dernierBilan = act.bilan(n, nbActions, v);
       return bon ? "ok" : "ko";
     }
     let port = "next";
+    if (cur.type === "act"){
+      const a = act.actions.find(a => a.key === cur.key);
+      v = a.f(v); nbActions++;
+      start.cur = v; majEtats(); await attendre(delai(cur)/2);
+      if (token !== runToken) return null;
+    }
     if (cur.type === "cond"){
       const c = act.conditions.find(c => c.key === cur.key);
-      port = c.test(n) ? "oui" : "non";
-      cur.portLit = port; majEtats(); await attendre(vitesse/2);
+      port = c.test(v) ? "oui" : "non";
+      cur.portLit = port; majEtats(); await attendre(delai(cur)/2);
       if (token !== runToken) return null;
     }
     const l = links.find(l => l.from === cur.id && l.port === port);
     if (!l){ cur.stuck = true; majEtats(); return "bloque"; }
-    l.lit = true; majEtats(); await attendre(vitesse/2);
+    // dans une boucle, on éteint l'ancien passage pour voir le tour en cours
+    if (visites[l.to]) { blocks.forEach(b => { if (b !== start) { delete b.lit; delete b.portLit; } }); links.forEach(x => delete x.lit); }
+    l.lit = true; majEtats(); await attendre(delai(cur)/2);
     if (token !== runToken) return null;
     cur = blocks.find(b => b.id === l.to);
-    cur.lit = true; majEtats(); await attendre(vitesse);
-    if (++pas > 30) return "boucle";
+    cur.lit = true; majEtats(); await attendre(delai(cur));
+    if (++pas > 300) return "boucle";
   }
 }
 
 function texteResultat(i, r){
   const n = nom(act.nombres[i]);
-  if (r === "ok") return `✔ Pour ${n}, ta machine donne la bonne réponse.`;
+  if (r === "ok") return `✔ Pour ${n}, ta machine donne la bonne réponse.` + (dernierBilan ? " " + dernierBilan : "");
   if (r === "ko") return `✘ Pour ${n}, ta machine se trompe !`;
   if (r === "bloque") return `⚠ Pour ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
   if (r === "nodebut") return "⚠ Ta machine n'a pas de bloc Début : glisse-le depuis le menu.";
-  return `⚠ Pour ${n}, la machine tourne en rond !`;
+  return `⚠ Pour ${n}, la machine tourne en rond : elle repasse au même endroit sans que n change (bloc en orange) !`;
 }
 
 async function testerUn(n){
