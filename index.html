@@ -49,6 +49,7 @@ main{flex:1;display:flex;min-height:0}
 .egal .g{text-align:left}
 .egal .g:first-child,.egal .g:nth-child(3n+1){text-align:right}
 .egal .plein{grid-column:1 / 4;text-align:center}
+.block.out.revele .face{border-color:#fff;box-shadow:0 0 22px 6px rgba(255,255,255,.55)}
 .calc.flash{animation:flashLigne .9s ease-out}
 /* ce sont les lettres et les symboles qui clignotent en blanc (pas de fond) */
 @keyframes flashLigne{0%{opacity:0;color:#fff;text-shadow:0 0 6px #fff,0 0 12px #fff}20%{opacity:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #fff}40%{opacity:.25}60%{opacity:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #fff}100%{opacity:1;text-shadow:none}}
@@ -753,7 +754,7 @@ function etatInitial(){
 }
 function sauver(){
   // on n'enregistre pas les lumières du dernier test
-  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "bulle", "bulleNew"];
+  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "bulle", "bulleNew"];
   try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId }, (k, v) => tmp.includes(k) ? undefined : v)); } catch(e){}
 }
 function charger(){
@@ -1316,6 +1317,7 @@ function majEtats(){
     const b = blocks.find(x => x.id == el.dataset.id);
     if (!b) return;
     el.classList.toggle("lit", !!b.lit);
+    el.classList.toggle("revele", !!b.revele);
     el.classList.toggle("ok", b.res === "ok");
     el.classList.toggle("ko", b.res === "ko");
     el.classList.toggle("etape", b.res === "etape");
@@ -1329,7 +1331,7 @@ function majEtats(){
   dessinerLiens();
 }
 function reinitLumieres(){
-  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.bulle; delete b.bulleNew; });
+  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; });
   links.forEach(l => delete l.lit);
 }
 
@@ -1359,12 +1361,13 @@ async function executer(i, vitesse, token){
         if (d){
           // les étapes du calcul apparaissent une par une, avec un petit clignotement blanc
           await attendre(vitesse / 2); if (token !== runToken) return null;
-          cur.lit = false; cur.extra = [];
+          // le bloc reste illuminé (contour et halo blancs) pendant que les lignes du calcul apparaissent
+          cur.lit = false; cur.revele = true; cur.extra = [];
           for (const l of d){
             cur.extra.push(l); cur.extraNew = cur.extra.length - 1; majEtats();
             await attendre(Math.max(450, vitesse * 1.3)); if (token !== runToken) return null;
           }
-          delete cur.extraNew;
+          delete cur.extraNew; delete cur.revele;
         }
       }
       const verdict = act.valide ? act.valide(n, v, cur.key) : cur.key === act.attendu(n);
