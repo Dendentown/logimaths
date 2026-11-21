@@ -530,7 +530,7 @@ function supprimerBloc(id){
   if (selPort && selPort.id === id) selPort = null;
   apresModif();
 }
-function apresModif(){ effacerEtats(); sauver(); rendu(); }
+function apresModif(){ sauver(); rendu(); effacerEtats(); }
 
 /* ===================== Exécution de la machine ===================== */
 const attendre = ms => new Promise(r => setTimeout(r, ms));
@@ -546,6 +546,7 @@ function effacerEtats(){
 function majEtats(){
   ws.querySelectorAll(".block").forEach(el => {
     const b = blocks.find(x => x.id == el.dataset.id);
+    if (!b) return;
     el.classList.toggle("lit", !!b.lit);
     el.classList.toggle("ok", b.res === "ok");
     el.classList.toggle("ko", b.res === "ko");
@@ -639,7 +640,17 @@ ACTIVITES.forEach((a, i) => { const o = document.createElement("option"); o.valu
 $("#choixAct").onchange = e => { stopRun(); selPort = null; chargerActivite(+e.target.value); };
 $("#btnTous").onclick = testerTous;
 $("#btnLancer").onclick = lancer;
-$("#btnVider").onclick = () => { if (confirm("Effacer tout le logigramme ?")){ stopRun(); selPort = null; etatInitial(); apresModif(); msg("Logigramme effacé.", ""); } };
+let viderTimer = null;
+$("#btnVider").onclick = () => {
+  const bt = $("#btnVider");
+  if (!viderTimer){
+    bt.textContent = "⚠ Clique encore pour confirmer"; bt.style.borderColor = "var(--ko)";
+    viderTimer = setTimeout(() => { viderTimer = null; bt.textContent = "🗑 Tout effacer"; bt.style.borderColor = ""; }, 3000);
+    return;
+  }
+  clearTimeout(viderTimer); viderTimer = null; bt.textContent = "🗑 Tout effacer"; bt.style.borderColor = "";
+  stopRun(); selPort = null; etatInitial(); apresModif(); msg("Logigramme effacé.", "");
+};
 $("#btnFermer").onclick = () => { $("#bravo").style.display = "none"; };
 chargerActivite(0);
 </script>
