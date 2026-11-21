@@ -379,8 +379,116 @@ const ACTIVITES = [
     nombres: [3, 6, 9, 7, 12, 15, 99, 58, 18, 22, 39, 69]
   },
   {
+    id: "multiple7-i",
+    titre: "Activité 4 — Multiple de 7 (division euclidienne)",
+    consigne: "Fais un logigramme qui permet de vérifier si un nombre <b>n</b> est un multiple de 7, en faisant la division euclidienne de n par 7.",
+    largeurDepart: 290,
+    // l'état de la machine : n (ne change jamais), r (variable de calcul, le reste), q (nombre de soustractions)
+    variables: ["r"],
+    etatInitial: n => ({ n }),
+    conditions: [
+      { key: "i7", texte: "r ≥ 7", test: e => e.r == null ? null : e.r >= 7 },
+      { key: "i0", texte: "r = 0", test: e => e.r == null ? null : e.r === 0 }
+    ],
+    // blocs Action : ils modifient r, puis la machine continue
+    actions: [
+      { key: "in", texte: "r prend la valeur n", f: e => ({ ...e, r: e.n, q: 0 }) },
+      { key: "imoins7", texte: "r prend la valeur r\u00a0−\u00a07", f: e => e.r == null ? null : ({ ...e, r: e.r - 7, q: (e.q || 0) + 1 }) }
+    ],
+    sorties: [
+      { key: "oui", texte: "n est un multiple de 7" },
+      { key: "non", texte: "n n'est pas un multiple de 7" }
+    ],
+    attendu: n => (n % 7 === 0 ? "oui" : "non"),
+    // affiché quand la machine a donné la bonne réponse : n = 7 × q + r
+    bilan: (n, e) => e.r == null || e.q == null ? "" : `Division euclidienne : ${n} = 7 × ${e.q} + ${e.r}.`,
+    // + chemin qui manquait : aucun tour de boucle et r = 0 (n = 0)
+    nombres: [21, 30, 49, 15, 63, 50, 6, 84, 0]
+  },
+  {
+    id: "pythagore-calculs",
+    titre: "Activité 5 — Réciproque et contraposée, avec les calculs",
+    consigne: "Fais un logigramme qui permet de savoir si un triangle ABC est rectangle, en calculant les carrés de ses côtés.",
+    entree: "Triangle ABC :",
+    largeurDepart: 420, hauteurDepart: 132,
+    // chaque valeur est un triangle [AB, AC, BC]
+    affiche: t => figureCotes(t),
+    nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
+    etatInitial: t => ({ t, calc: [] }),
+    suiviTests: true,   // la machine retient quelles conditions ont été testées, et avec quels calculs déjà faits
+    conditions: [
+      { key: "gAB", texte: "AB est le plus grand côté", test: e => plusGrand(e.t) === "AB" },
+      { key: "gAC", texte: "AC est le plus grand côté", test: e => plusGrand(e.t) === "AC" },
+      { key: "gBC", texte: "BC est le plus grand côté", test: e => plusGrand(e.t) === "BC" },
+      // « lie » : blocs de calcul qui clignotent quand on teste cette égalité
+      { key: "egalA", texte: "BC² = AB² + AC²", test: e => egalite(e.t[2], e.t[0], e.t[1]), lie: ["cBC", "sABAC"] },
+      { key: "egalB", texte: "AC² = AB² + BC²", test: e => egalite(e.t[1], e.t[0], e.t[2]), lie: ["cAC", "sABBC"] },
+      { key: "egalC", texte: "AB² = AC² + BC²", test: e => egalite(e.t[0], e.t[1], e.t[2]), lie: ["cAB", "sACBC"] }
+    ],
+    // blocs de calcul : le détail s'affiche à côté du bloc, ligne par ligne
+    actions: [
+      { key: "cAB", texte: "On calcule AB²", f: e => calcule(e, "cAB"), detail: t => detailCarre("AB", t[0]) },
+      { key: "cAC", texte: "On calcule AC²", f: e => calcule(e, "cAC"), detail: t => detailCarre("AC", t[1]) },
+      { key: "cBC", texte: "On calcule BC²", f: e => calcule(e, "cBC"), detail: t => detailCarre("BC", t[2]) },
+      { key: "sABAC", texte: "On calcule AB² + AC²", f: e => calcule(e, "sABAC"), detail: t => detailSomme("AB", t[0], "AC", t[1]) },
+      { key: "sABBC", texte: "On calcule AB² + BC²", f: e => calcule(e, "sABBC"), detail: t => detailSomme("AB", t[0], "BC", t[2]) },
+      { key: "sACBC", texte: "On calcule AC² + BC²", f: e => calcule(e, "sACBC"), detail: t => detailSomme("AC", t[1], "BC", t[2]) }
+    ],
+    sorties: [
+      { key: "rectA", texte: "ABC est rectangle en A" },
+      { key: "rectB", texte: "ABC est rectangle en B" },
+      { key: "rectC", texte: "ABC est rectangle en C" },
+      { key: "nonrect", texte: "ABC n'est pas rectangle" },
+      // pour la branche impossible : aucun des trois côtés ne serait le plus grand
+      { key: "absurde", texte: "C'est absurde" }
+    ],
+    attendu: t => attenduCotes(t),
+    // bonne fin : jamais en rouge. Si l'égalité du plus grand côté n'a pas été testée,
+    // ou si les deux calculs n'ont pas été faits avant ce test, il manque une étape (orange)
+    valide: (t, e, fin) => {
+      if (fin !== attenduCotes(t)) return false;
+      const g = plusGrand(t), besoin = CALCULS_UTILES[g];
+      const test = (e.tests || []).find(x => x.key === besoin.egal);
+      if (!test) return "etape";
+      if (!besoin.calc.every(k => test.calc.includes(k))) return "etape";
+      return true;
+    },
+    bilan: (t, e) => {
+      const g = plusGrand(t), [x, y] = ["AB", "AC", "BC"].filter(k => k !== g);
+      const val = { AB: t[0], AC: t[1], BC: t[2] }, gg = fr(r2(val[g] ** 2)), ss = fr(r2(val[x] ** 2 + val[y] ** 2));
+      return attenduCotes(t) === "nonrect"
+        ? `${g}² = ${gg} et ${x}² + ${y}² = ${ss} : ${g}² ≠ ${x}² + ${y}², donc d'après la contraposée du théorème de Pythagore, ABC n'est pas rectangle.`
+        : `${g}² = ${gg} et ${x}² + ${y}² = ${ss} : ${g}² = ${x}² + ${y}², donc d'après la réciproque du théorème de Pythagore, ABC est rectangle.`;
+    },
+    // + chemin qui manquait : AC plus grand côté, pas rectangle (5 ; 8 ; 6)
+    nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [9, 6, 7], [5, 8, 6]]
+  },
+  {
+    id: "pythagore-rc",
+    titre: "Activité 6 — Réciproque et contraposée du théorème de Pythagore",
+    consigne: "Fais un logigramme qui permet de savoir si un triangle ABC, dont on connaît les longueurs des côtés, est rectangle.",
+    entree: "Triangle ABC :",
+    largeurDepart: 420, hauteurDepart: 132,
+    // chaque valeur est un triangle [AB, AC, BC]
+    affiche: t => figureCotes(t),
+    nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
+    conditions: [
+      { key: "egalA", texte: "BC² = AB² + AC²", test: t => egalite(t[2], t[0], t[1]) },
+      { key: "egalB", texte: "AC² = AB² + BC²", test: t => egalite(t[1], t[0], t[2]) },
+      { key: "egalC", texte: "AB² = AC² + BC²", test: t => egalite(t[0], t[1], t[2]) }
+    ],
+    sorties: [
+      { key: "rectA", texte: "ABC est rectangle en A" },
+      { key: "rectB", texte: "ABC est rectangle en B" },
+      { key: "rectC", texte: "ABC est rectangle en C" },
+      { key: "nonrect", texte: "ABC n'est pas rectangle" }
+    ],
+    attendu: t => egalite(t[2], t[0], t[1]) ? "rectA" : egalite(t[1], t[0], t[2]) ? "rectB" : egalite(t[0], t[1], t[2]) ? "rectC" : "nonrect",
+    nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [6, 7, 9]]
+  },
+  {
     id: "pythagore-longueur",
-    titre: "Activité 4 — Calculer une longueur avec le théorème de Pythagore",
+    titre: "Activité 7 — Calculer une longueur avec le théorème de Pythagore",
     consigne: "Fais un logigramme qui permet de calculer la longueur du côté <b>a</b> d'un triangle dont on connaît les côtés b et c.",
     entree: "Le triangle :",
     largeurDepart: 420, hauteurDepart: 146,
@@ -445,7 +553,7 @@ const ACTIVITES = [
   },
   {
     id: "pythagore-direct",
-    titre: "Activité 5 — Théorème de Pythagore",
+    titre: "Activité 8 — Théorème de Pythagore",
     consigne: "Fais un logigramme qui permet de dire ce que le théorème de Pythagore permet de conclure sur un triangle ABC dont on connaît les angles.",
     entree: "Triangle ABC :",
     largeurDepart: 420, hauteurDepart: 132,
@@ -467,114 +575,6 @@ const ACTIVITES = [
     // mesures d'angles affichées sur certaines figures (index de la figure → sommets)
     anglesAffiches: { 5: ["A"], 7: ["C"] },
     nombres: [[90, 30, 60], [40, 90, 50], [60, 60, 60], [90, 45, 45], [30, 60, 90], [100, 40, 40], [90, 20, 70], [50, 50, 80]]
-  },
-  {
-    id: "pythagore-calculs",
-    titre: "Activité 6 — Réciproque et contraposée, avec les calculs",
-    consigne: "Fais un logigramme qui permet de savoir si un triangle ABC est rectangle, en calculant les carrés de ses côtés.",
-    entree: "Triangle ABC :",
-    largeurDepart: 420, hauteurDepart: 132,
-    // chaque valeur est un triangle [AB, AC, BC]
-    affiche: t => figureCotes(t),
-    nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
-    etatInitial: t => ({ t, calc: [] }),
-    suiviTests: true,   // la machine retient quelles conditions ont été testées, et avec quels calculs déjà faits
-    conditions: [
-      { key: "gAB", texte: "AB est le plus grand côté", test: e => plusGrand(e.t) === "AB" },
-      { key: "gAC", texte: "AC est le plus grand côté", test: e => plusGrand(e.t) === "AC" },
-      { key: "gBC", texte: "BC est le plus grand côté", test: e => plusGrand(e.t) === "BC" },
-      // « lie » : blocs de calcul qui clignotent quand on teste cette égalité
-      { key: "egalA", texte: "BC² = AB² + AC²", test: e => egalite(e.t[2], e.t[0], e.t[1]), lie: ["cBC", "sABAC"] },
-      { key: "egalB", texte: "AC² = AB² + BC²", test: e => egalite(e.t[1], e.t[0], e.t[2]), lie: ["cAC", "sABBC"] },
-      { key: "egalC", texte: "AB² = AC² + BC²", test: e => egalite(e.t[0], e.t[1], e.t[2]), lie: ["cAB", "sACBC"] }
-    ],
-    // blocs de calcul : le détail s'affiche à côté du bloc, ligne par ligne
-    actions: [
-      { key: "cAB", texte: "On calcule AB²", f: e => calcule(e, "cAB"), detail: t => detailCarre("AB", t[0]) },
-      { key: "cAC", texte: "On calcule AC²", f: e => calcule(e, "cAC"), detail: t => detailCarre("AC", t[1]) },
-      { key: "cBC", texte: "On calcule BC²", f: e => calcule(e, "cBC"), detail: t => detailCarre("BC", t[2]) },
-      { key: "sABAC", texte: "On calcule AB² + AC²", f: e => calcule(e, "sABAC"), detail: t => detailSomme("AB", t[0], "AC", t[1]) },
-      { key: "sABBC", texte: "On calcule AB² + BC²", f: e => calcule(e, "sABBC"), detail: t => detailSomme("AB", t[0], "BC", t[2]) },
-      { key: "sACBC", texte: "On calcule AC² + BC²", f: e => calcule(e, "sACBC"), detail: t => detailSomme("AC", t[1], "BC", t[2]) }
-    ],
-    sorties: [
-      { key: "rectA", texte: "ABC est rectangle en A" },
-      { key: "rectB", texte: "ABC est rectangle en B" },
-      { key: "rectC", texte: "ABC est rectangle en C" },
-      { key: "nonrect", texte: "ABC n'est pas rectangle" },
-      // pour la branche impossible : aucun des trois côtés ne serait le plus grand
-      { key: "absurde", texte: "C'est absurde" }
-    ],
-    attendu: t => attenduCotes(t),
-    // bonne fin : jamais en rouge. Si l'égalité du plus grand côté n'a pas été testée,
-    // ou si les deux calculs n'ont pas été faits avant ce test, il manque une étape (orange)
-    valide: (t, e, fin) => {
-      if (fin !== attenduCotes(t)) return false;
-      const g = plusGrand(t), besoin = CALCULS_UTILES[g];
-      const test = (e.tests || []).find(x => x.key === besoin.egal);
-      if (!test) return "etape";
-      if (!besoin.calc.every(k => test.calc.includes(k))) return "etape";
-      return true;
-    },
-    bilan: (t, e) => {
-      const g = plusGrand(t), [x, y] = ["AB", "AC", "BC"].filter(k => k !== g);
-      const val = { AB: t[0], AC: t[1], BC: t[2] }, gg = fr(r2(val[g] ** 2)), ss = fr(r2(val[x] ** 2 + val[y] ** 2));
-      return attenduCotes(t) === "nonrect"
-        ? `${g}² = ${gg} et ${x}² + ${y}² = ${ss} : ${g}² ≠ ${x}² + ${y}², donc d'après la contraposée du théorème de Pythagore, ABC n'est pas rectangle.`
-        : `${g}² = ${gg} et ${x}² + ${y}² = ${ss} : ${g}² = ${x}² + ${y}², donc d'après la réciproque du théorème de Pythagore, ABC est rectangle.`;
-    },
-    // + chemin qui manquait : AC plus grand côté, pas rectangle (5 ; 8 ; 6)
-    nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [9, 6, 7], [5, 8, 6]]
-  },
-  {
-    id: "pythagore-rc",
-    titre: "Activité 7 — Réciproque et contraposée du théorème de Pythagore",
-    consigne: "Fais un logigramme qui permet de savoir si un triangle ABC, dont on connaît les longueurs des côtés, est rectangle.",
-    entree: "Triangle ABC :",
-    largeurDepart: 420, hauteurDepart: 132,
-    // chaque valeur est un triangle [AB, AC, BC]
-    affiche: t => figureCotes(t),
-    nomEntree: t => `le triangle n°${act.nombres.indexOf(t) + 1}`,
-    conditions: [
-      { key: "egalA", texte: "BC² = AB² + AC²", test: t => egalite(t[2], t[0], t[1]) },
-      { key: "egalB", texte: "AC² = AB² + BC²", test: t => egalite(t[1], t[0], t[2]) },
-      { key: "egalC", texte: "AB² = AC² + BC²", test: t => egalite(t[0], t[1], t[2]) }
-    ],
-    sorties: [
-      { key: "rectA", texte: "ABC est rectangle en A" },
-      { key: "rectB", texte: "ABC est rectangle en B" },
-      { key: "rectC", texte: "ABC est rectangle en C" },
-      { key: "nonrect", texte: "ABC n'est pas rectangle" }
-    ],
-    attendu: t => egalite(t[2], t[0], t[1]) ? "rectA" : egalite(t[1], t[0], t[2]) ? "rectB" : egalite(t[0], t[1], t[2]) ? "rectC" : "nonrect",
-    nombres: [[3, 4, 5], [6, 10, 8], [4, 5, 6], [5, 3, 4], [5, 6, 7.8], [5, 13, 12], [8.5, 4, 7.5], [6, 7, 9]]
-  },
-  {
-    id: "multiple7-i",
-    titre: "Activité 8 — Multiple de 7 (division euclidienne)",
-    consigne: "Fais un logigramme qui permet de vérifier si un nombre <b>n</b> est un multiple de 7, en faisant la division euclidienne de n par 7.",
-    largeurDepart: 290,
-    // l'état de la machine : n (ne change jamais), r (variable de calcul, le reste), q (nombre de soustractions)
-    variables: ["r"],
-    etatInitial: n => ({ n }),
-    conditions: [
-      { key: "i7", texte: "r ≥ 7", test: e => e.r == null ? null : e.r >= 7 },
-      { key: "i0", texte: "r = 0", test: e => e.r == null ? null : e.r === 0 }
-    ],
-    // blocs Action : ils modifient r, puis la machine continue
-    actions: [
-      { key: "in", texte: "r prend la valeur n", f: e => ({ ...e, r: e.n, q: 0 }) },
-      { key: "imoins7", texte: "r prend la valeur r\u00a0−\u00a07", f: e => e.r == null ? null : ({ ...e, r: e.r - 7, q: (e.q || 0) + 1 }) }
-    ],
-    sorties: [
-      { key: "oui", texte: "n est un multiple de 7" },
-      { key: "non", texte: "n n'est pas un multiple de 7" }
-    ],
-    attendu: n => (n % 7 === 0 ? "oui" : "non"),
-    // affiché quand la machine a donné la bonne réponse : n = 7 × q + r
-    bilan: (n, e) => e.r == null || e.q == null ? "" : `Division euclidienne : ${n} = 7 × ${e.q} + ${e.r}.`,
-    // + chemin qui manquait : aucun tour de boucle et r = 0 (n = 0)
-    nombres: [21, 30, 49, 15, 63, 50, 6, 84, 0]
   }
 ];
 const aff = v => act.affiche ? act.affiche(v) : String(v);
