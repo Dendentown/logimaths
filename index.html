@@ -91,6 +91,7 @@ svg#links path.hit:hover + path.vis{stroke:var(--ko)}
 .block.cond.lit{filter:drop-shadow(0 0 14px rgba(255,255,255,.8))}
 .block.start.lit .face{border-color:#fff}
 .block.out.ok .face{background:var(--ok);border-color:#a8ffcb;color:#06240f;box-shadow:0 0 26px 8px rgba(46,204,113,.6)}
+.block.out.etape .face{background:var(--warn);border-color:#ffd9a8;color:#2a1500;box-shadow:0 0 26px 8px rgba(255,159,67,.6)}
 .block.out.ko .face{background:var(--ko);border-color:#ffc2c2;color:#2a0505;box-shadow:0 0 26px 8px rgba(255,77,77,.6)}
 .block.stuck .face{box-shadow:0 0 0 4px var(--warn)}
 .block.cond.stuck .bord{background:var(--warn)}
@@ -135,6 +136,7 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
 .num{min-width:52px;font-family:ui-monospace,Consolas,monospace;font-size:16px;font-weight:700;background:var(--block);color:var(--txt);border:2px solid var(--blockb);border-radius:8px;padding:6px 10px;cursor:pointer}
 .num:hover{border-color:var(--accent)}
 .num.ok{background:var(--ok);border-color:var(--ok);color:#06240f}
+.num.etape{background:var(--warn);border-color:var(--warn);color:#2a1500}
 .num.ko{background:var(--ko);border-color:var(--ko);color:#2a0505}
 .num.cur{outline:3px solid #fff;outline-offset:2px}
 #msg{font-size:15px;min-height:22px}
@@ -1017,7 +1019,7 @@ function effacerEtats(){
   stopRun(); reinitLumieres();
   blocks.forEach(b => { if (b.type === "start") delete b.val; });
   links.forEach(l => delete l.lit);
-  document.querySelectorAll(".num").forEach(x => { x.classList.remove("ok","ko"); x.classList.toggle("cur", x.dataset.n == nCourant); });
+  document.querySelectorAll(".num").forEach(x => { x.classList.remove("ok","ko","etape"); x.classList.toggle("cur", x.dataset.n == nCourant); });
   majEtats();
 }
 function majEtats(){
@@ -1027,6 +1029,7 @@ function majEtats(){
     el.classList.toggle("lit", !!b.lit);
     el.classList.toggle("ok", b.res === "ok");
     el.classList.toggle("ko", b.res === "ko");
+    el.classList.toggle("etape", b.res === "etape");
     el.classList.toggle("stuck", !!b.stuck);
     if (b.type === "start" || b.type === "out") el.querySelector(".face").innerHTML = texteBloc(b);
     if (b.type === "out") el.classList.toggle("calcul", !!b.extra);
@@ -1074,7 +1077,7 @@ async function executer(i, vitesse, token){
         }
       }
       const verdict = act.valide ? act.valide(n, v, cur.key) : cur.key === act.attendu(n);
-      if (verdict === "etape"){ cur.lit = false; cur.stuck = true; majEtats(); return "etape"; }
+      if (verdict === "etape"){ cur.lit = false; cur.res = "etape"; majEtats(); return "etape"; }
       const bon = verdict === true;
       cur.lit = false; cur.res = bon ? "ok" : "ko"; majEtats();
       if (bon && act.bilan) dernierBilan = act.etatInitial ? act.bilan(n, v) : act.bilan(n, nbActions, v);
@@ -1115,7 +1118,7 @@ function texteResultat(i, r){
   if (r === "ok") return `✔ Pour ${n}, ta machine donne la bonne réponse.` + (dernierBilan ? " " + dernierBilan : "");
   if (r === "ko") return `✘ Pour ${n}, ta machine se trompe !`;
   if (r === "bloque") return `⚠ Pour ${n}, la machine s'arrête : il manque une flèche (bloc en orange).`;
-  if (r === "etape") return `⚠ Pour ${n}, ta machine arrive à la bonne conclusion, mais il manque une étape de calcul ou elle n'est pas dans le bon ordre (bloc en orange).`;
+  if (r === "etape") return `⚠ Pour ${n}, ta machine arrive à la bonne conclusion, mais il manque une étape de calcul ou elle n'est pas dans le bon ordre (en orange).`;
   if (r === "sansvaleur") return `⚠ Pour ${n}, la machine utilise ${(act.variables || ["une variable"]).join(", ")} alors qu'elle n'a pas encore de valeur (bloc en orange) !`;
   if (r === "nodebut") return "⚠ Ta machine n'a pas de bloc Début : glisse-le depuis le menu.";
   return `⚠ Pour ${n}, la machine tourne en rond : elle repasse au même endroit sans que n change (bloc en orange) !`;
@@ -1129,14 +1132,14 @@ async function testerUn(n){
   if (r === null) return;
   if (r === "nodebut"){ msg(texteResultat(n, r), "warn"); return; }
   const btn = document.querySelector(`.num[data-n="${n}"]`);
-  btn.classList.remove("ok","ko"); btn.classList.add(r === "ok" ? "ok" : "ko");
+  btn.classList.remove("ok","ko","etape"); btn.classList.add(r === "ok" ? "ok" : r === "etape" ? "etape" : "ko");
   msg(texteResultat(n, r), r === "ok" ? "ok" : r === "ko" ? "ko" : "warn");
 }
 
 async function testerTous(){
   stopRun(); const token = runToken;
   if (!blocks.some(b => b.type === "start")){ msg(texteResultat(0, "nodebut"), "warn"); return; }
-  document.querySelectorAll(".num").forEach(b => b.classList.remove("ok","ko","cur"));
+  document.querySelectorAll(".num").forEach(b => b.classList.remove("ok","ko","etape","cur"));
   let erreurs = 0;
   for (let n = 0; n < act.nombres.length; n++){
     const btn = document.querySelector(`.num[data-n="${n}"]`);
@@ -1144,7 +1147,7 @@ async function testerTous(){
     msg(`La machine teste ${nom(act.nombres[n])}…`, "");
     const r = await executer(n, 280, token);
     if (r === null) return;
-    btn.classList.add(r === "ok" ? "ok" : "ko");
+    btn.classList.add(r === "ok" ? "ok" : r === "etape" ? "etape" : "ko");
     if (r !== "ok") erreurs++;
     await attendre(450);
     if (token !== runToken) return;
