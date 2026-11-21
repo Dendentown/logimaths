@@ -139,8 +139,8 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
   h1{font-size:19px}
   header > div:has(select){flex:1;min-width:0}
   #choixAct{width:100%;font-size:13px;padding:5px 6px}
-  #btnVider{padding:5px 9px}
-  #btnVider .txt{display:none}
+  #btnVider,#btnPlein{padding:5px 9px}
+  #btnVider .txt,#btnPlein .txt{display:none}
   #consigne{order:5;flex-basis:100%;min-width:0;font-size:12.5px;line-height:1.3;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
   #consigne.ouvert{-webkit-line-clamp:unset;display:block}
@@ -171,8 +171,8 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
   #consigne{flex:1;min-width:0;font-size:11.5px;line-height:1.25;cursor:pointer;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   #consigne.ouvert{-webkit-line-clamp:unset;display:block}
-  #btnVider{padding:4px 9px}
-  #btnVider .txt{display:none}
+  #btnVider,#btnPlein{padding:4px 9px}
+  #btnVider .txt,#btnPlein .txt{display:none}
   #palette{width:168px;padding:4px 8px}
   #palette h3{font-size:10px;margin:6px 0 4px}
   .pal{font-size:11.5px;padding:6px 8px;margin-bottom:6px}
@@ -199,6 +199,7 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
     <select id="choixAct" class="btn"></select>
   </div>
   <div id="consigne"></div>
+  <button class="btn" id="btnPlein" title="Plein écran">⛶<span class="txt"> Plein écran</span></button>
   <button class="btn" id="btnVider" title="Effacer le logigramme">🗑<span class="txt"> Tout effacer</span></button>
 </header>
 
@@ -1123,6 +1124,18 @@ async function testerTous(){
 
 /* ===================== Démarrage ===================== */
 $("#zMoins").onclick = () => zoomer(1 / 1.2);
+// bouton plein écran (masqué si le navigateur ne le permet pas, par exemple sur iPhone)
+{
+  const el = document.documentElement, bp = $("#btnPlein");
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  const exit = document.exitFullscreen || document.webkitExitFullscreen;
+  const actif = () => document.fullscreenElement || document.webkitFullscreenElement;
+  if (!req) bp.style.display = "none";
+  const maj = () => { bp.innerHTML = actif() ? '⤢<span class="txt"> Quitter le plein écran</span>' : '⛶<span class="txt"> Plein écran</span>'; bp.title = actif() ? "Quitter le plein écran" : "Plein écran"; };
+  bp.onclick = () => { try { actif() ? exit.call(document) : req.call(el); } catch(e){} };
+  document.addEventListener("fullscreenchange", () => { maj(); setTimeout(appliquerEchelle, 200); });
+  document.addEventListener("webkitfullscreenchange", () => { maj(); setTimeout(appliquerEchelle, 200); });
+}
 $("#zPlus").onclick = () => zoomer(1.2);
 $("#consigne").onclick = () => $("#consigne").classList.toggle("ouvert");
 let tRedim = null;
