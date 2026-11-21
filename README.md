@@ -15,9 +15,9 @@ Jeu de logique : l'élève construit une **machine de vérification** sous forme
 On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lancer la vérification** : les blocs traversés s'allument en **blanc**, et la sortie atteinte s'affiche en **vert** (bonne réponse) ou en **rouge** (mauvaise réponse).
 
 ## Activité 3 — Multiple de 3
-- Entrée : `n = [   ]` (n ne change jamais), avec la variable q affichée à côté
-- Actions : « q prend la valeur n », « q prend la valeur de la somme de ses chiffres » (le calcul s'affiche à côté du bloc en clignotant)
-- Conditions : « q ≥ 10 », « q = 3 », « q = 6 », « q = 9 »
+- Entrée : `n = [   ]` (n ne change jamais), avec la variable k affichée à côté
+- Actions : « k prend la valeur n », « k prend la valeur de la somme de ses chiffres » (le calcul s'affiche à côté du bloc en clignotant)
+- Conditions : « k ≥ 10 », « k = 3 », « k = 6 », « k = 9 »
 - Fin : « n est un multiple de 3 », « n n'est pas un multiple de 3 »
 
 ## Activité 4 — Calculer une longueur avec le théorème de Pythagore

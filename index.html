@@ -352,21 +352,21 @@ const ACTIVITES = [
     titre: "Activité 3 — Multiple de 3",
     consigne: "Fais un logigramme qui permet de vérifier si un nombre <b>n</b> est un multiple de 3.",
     largeurDepart: 290,
-    // n ne change jamais ; q sert au calcul (somme des chiffres)
-    variables: ["q"],
+    // n ne change jamais ; k sert au calcul (somme des chiffres)
+    variables: ["k"],
     etatInitial: n => ({ n }),
     conditions: [
-      { key: "q10", texte: "q ≥ 10", test: e => e.q == null ? null : e.q >= 10 },
-      { key: "q3", texte: "q = 3", test: e => e.q == null ? null : e.q === 3 },
-      { key: "q6", texte: "q = 6", test: e => e.q == null ? null : e.q === 6 },
-      { key: "q9", texte: "q = 9", test: e => e.q == null ? null : e.q === 9 }
+      { key: "q10", texte: "k ≥ 10", test: e => e.k == null ? null : e.k >= 10 },
+      { key: "q3", texte: "k = 3", test: e => e.k == null ? null : e.k === 3 },
+      { key: "q6", texte: "k = 6", test: e => e.k == null ? null : e.k === 6 },
+      { key: "q9", texte: "k = 9", test: e => e.k == null ? null : e.k === 9 }
     ],
     actions: [
-      { key: "qn", texte: "q prend la valeur n", f: e => ({ ...e, q: e.n }) },
+      { key: "qn", texte: "k prend la valeur n", f: e => ({ ...e, k: e.n }) },
       // le calcul de la somme des chiffres s'affiche à côté du bloc, en clignotant
-      { key: "qsomme", texte: "q prend la valeur de la somme de ses chiffres",
-        f: e => e.q == null ? null : ({ ...e, q: sommeChiffres(e.q) }),
-        detail: (n, e) => [`q = ${String(e.q).split("").join(" + ")}`, `= ${sommeChiffres(e.q)}`] }
+      { key: "qsomme", texte: "k prend la valeur de la somme de ses chiffres",
+        f: e => e.k == null ? null : ({ ...e, k: sommeChiffres(e.k) }),
+        detail: (n, e) => [`k = ${String(e.k).split("").join(" + ")}`, `= ${sommeChiffres(e.k)}`] }
     ],
     sorties: [
       { key: "oui", texte: "n est un multiple de 3" },
@@ -374,8 +374,8 @@ const ACTIVITES = [
     ],
     attendu: n => (n % 3 === 0 ? "oui" : "non"),
     bilan: (n, e) => { const ch = [n]; while (ch[ch.length - 1] >= 10) ch.push(sommeChiffres(ch[ch.length - 1])); return ch.length > 1 ? `Sommes des chiffres : ${ch.join(" → ")}.` : ""; },
-    // chemins : sans tour de boucle (q = 3, 6, 9 ou autre) puis avec des tours de boucle (q = 3, 6, 9 ou autre)
-    // + chemins qui manquaient : 1 tour puis q = 9 (18) ou autre (22) ; 2 tours puis q = 3 (39) ou q = 6 (69)
+    // chemins : sans tour de boucle (k = 3, 6, 9 ou autre) puis avec des tours de boucle (k = 3, 6, 9 ou autre)
+    // + chemins qui manquaient : 1 tour puis k = 9 (18) ou autre (22) ; 2 tours puis k = 3 (39) ou k = 6 (69)
     nombres: [3, 6, 9, 7, 12, 15, 99, 58, 18, 22, 39, 69]
   },
   {
