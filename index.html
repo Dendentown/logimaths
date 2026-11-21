@@ -324,7 +324,9 @@ const ACTIVITES = [
       { key: "moins", texte: "a = " + rac("c² − b²") },
       { key: "moinsB", texte: "a = " + rac("b² − c²") },
       { key: "plus", texte: "a = " + rac("c² + b²") },
-      { key: "nc", texte: "On ne peut pas utiliser le théorème de Pythagore" }
+      { key: "nc", texte: "On ne peut pas utiliser le théorème de Pythagore" },
+      // pour la branche impossible : rectangle, mais ni a, ni b, ni c n'est l'hypoténuse
+      { key: "absurde", texte: "C'est absurde" }
     ],
     attendu: t => ({ a: "plus", b: "moinsB", c: "moins" })[t.hyp] || "nc",
     // bonne fin, mais il faut aussi être passé par les bonnes égalités
@@ -342,7 +344,7 @@ const ACTIVITES = [
     },
     // quand la machine arrive sur une Fin de calcul : égalité avec les valeurs, terme sous la racine, puis valeur de a
     detailFin: (t, fin) => {
-      if (fin === "nc") return null;
+      if (fin === "nc" || fin === "absurde") return null;
       const [x, op, y] = fin === "plus" ? [t.c, "+", t.b] : fin === "moins" ? [t.c, "−", t.b] : [t.b, "−", t.c];
       const sq = op === "+" ? x*x + y*y : x*x - y*y;
       const l1 = "a = " + rac(`${fr(x)}² ${op} ${fr(y)}²`);
