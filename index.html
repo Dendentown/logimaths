@@ -106,7 +106,9 @@ body.cible .port.in{box-shadow:0 0 0 4px rgba(255,201,77,.45)}
 .del{position:absolute;top:-10px;right:-10px;width:calc(28px / var(--E,1));height:calc(28px / var(--E,1));border-radius:50%;background:#c0392b;color:#fff;border:2px solid #fff;font-size:calc(18px / var(--E,1));font-weight:700;line-height:calc(23px / var(--E,1));text-align:center;cursor:pointer;z-index:4;display:none}
 .block.choisi .del{display:block}
 .block.choisi .face{outline:3px dashed #ff6b6b;outline-offset:4px}
-.block.cond.choisi{filter:drop-shadow(0 0 6px #ff6b6b)}
+.block.cond.choisi{filter:drop-shadow(0 0 3px #ff6b6b) drop-shadow(0 0 3px #ff6b6b)}
+.block.cond.choisi .bord{background:#ff6b6b}
+.block.cond.choisi .face{outline:none;inset:5px}
 .block.cond .del{top:10px;right:42px}
 #ghost{position:fixed;pointer-events:none;z-index:50;opacity:.85;display:none;background:var(--block);border:2px dashed var(--accent);border-radius:10px;padding:8px 10px;font-size:13px;max-width:220px}
 footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16px;display:flex;flex-direction:column;gap:8px}
@@ -118,6 +120,11 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 16p
 .block.start.lit .slot{background:#fff;color:#111;border-color:#111}
 .num{touch-action:pan-x;user-select:none;cursor:grab}
 .pal.saisi,.num.saisi{outline:3px solid var(--accent);outline-offset:2px;transform:scale(1.05)}
+/* losanges : on entoure le losange lui-même, pas le rectangle autour */
+.pal.cond.saisi{outline:none;filter:drop-shadow(0 0 3px var(--accent)) drop-shadow(0 0 3px var(--accent))}
+.pal.cond.saisi .bord{background:var(--accent)}
+.pal.cond .bord{inset:0}
+.pal.cond.saisi .face{inset:4px}
 .num.fig{padding:2px 4px;line-height:0}
 .slot svg.fig{display:block}
 .slot:has(svg){height:auto;min-height:36px;padding:2px 4px}
