@@ -326,7 +326,7 @@ const ACTIVITES = [
       { key: "non", texte: "n n'est pas un multiple de 10" }
     ],
     attendu: n => (n % 10 === 0 ? "oui" : "non"),
-    // une valeur par fin possible
+    // une valeur par chemin possible dans le logigramme
     nombres: [30, 45]
   },
   {
@@ -343,7 +343,8 @@ const ACTIVITES = [
     ],
     // bonne réponse attendue pour un nombre n
     attendu: n => (n % 5 === 0 ? "oui" : "non"),
-    nombres: [35, 47]
+    // chemins : unités 0 → multiple ; unités 5 → multiple ; ni 0 ni 5 → pas multiple
+    nombres: [20, 35, 47]
   },
   {
     id: "pythagore-longueur",
@@ -489,7 +490,8 @@ const ACTIVITES = [
         ? `${g}² = ${gg} et ${x}² + ${y}² = ${ss} : ${g}² ≠ ${x}² + ${y}², donc d'après la contraposée du théorème de Pythagore, ABC n'est pas rectangle.`
         : `${g}² = ${gg} et ${x}² + ${y}² = ${ss} : ${g}² = ${x}² + ${y}², donc d'après la réciproque du théorème de Pythagore, ABC est rectangle.`;
     },
-    nombres: [[3, 4, 5], [6, 10, 8], [5, 3, 4], [5, 6, 7.8]]
+    // chemins : plus grand côté BC, AC ou AB, puis rectangle ou non → 6 chemins
+    nombres: [[3, 4, 5], [5, 6, 7.8], [6, 10, 8], [5, 8, 6], [5, 3, 4], [9, 6, 7]]
   },
   {
     id: "pythagore-rc",
@@ -538,7 +540,8 @@ const ACTIVITES = [
     attendu: n => (n % 7 === 0 ? "oui" : "non"),
     // affiché quand la machine a donné la bonne réponse : n = 7 × q + r
     bilan: (n, e) => e.r == null || e.q == null ? "" : `Division euclidienne : ${n} = 7 × ${e.q} + ${e.r}.`,
-    nombres: [21, 30]
+    // chemins : avec ou sans tour de boucle, puis r = 0 ou non
+    nombres: [21, 30, 6, 0]
   }
 ];
 const aff = v => act.affiche ? act.affiche(v) : String(v);
