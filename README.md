@@ -26,10 +26,10 @@ On glisse un nombre dans la case vide de `n = [   ]`, puis on clique sur **Lance
 
 ## Activité 5 — Multiple de 7 (division euclidienne)
 - Entrée : `n = [   ]` (n ne change jamais)
-- Actions (nouveaux blocs) : « i prend la valeur n », « i prend la valeur i − 7 » — permettent de faire une **boucle**
-- Conditions : « i ≥ 7 », « i = 0 »
+- Actions (nouveaux blocs) : « r prend la valeur n », « r prend la valeur r − 7 » — permettent de faire une **boucle**
+- Conditions : « r ≥ 7 », « r = 0 »
 - Fin : « n est un multiple de 7 », « n n'est pas un multiple de 7 »
-- Pendant la vérification, la valeur de i s'affiche à côté de n ; à la fin, le jeu affiche la division euclidienne (ex. 30 = 7 × 4 + 2).
+- Pendant la vérification, la valeur de r s'affiche à côté de n ; à la fin, le jeu affiche la division euclidienne (ex. 30 = 7 × 4 + 2).
 
 ## Comment jouer
 - Glisser un bloc de la palette dans la zone (ou le toucher).

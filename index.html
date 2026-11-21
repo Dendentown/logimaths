@@ -268,17 +268,17 @@ const ACTIVITES = [
     consigne: "Construis une machine qui vérifie si un nombre <b>n</b> est un multiple de 7, " +
               "en faisant la division euclidienne de n par 7.",
     largeurDepart: 290,
-    // l'état de la machine : n (ne change jamais), i (variable de calcul), q (nombre de soustractions)
-    variables: ["i"],
+    // l'état de la machine : n (ne change jamais), r (variable de calcul, le reste), q (nombre de soustractions)
+    variables: ["r"],
     etatInitial: n => ({ n }),
     conditions: [
-      { key: "i7", texte: "i ≥ 7", test: e => e.i == null ? null : e.i >= 7 },
-      { key: "i0", texte: "i = 0", test: e => e.i == null ? null : e.i === 0 }
+      { key: "i7", texte: "r ≥ 7", test: e => e.r == null ? null : e.r >= 7 },
+      { key: "i0", texte: "r = 0", test: e => e.r == null ? null : e.r === 0 }
     ],
-    // blocs Action : ils modifient i, puis la machine continue
+    // blocs Action : ils modifient r, puis la machine continue
     actions: [
-      { key: "in", texte: "i prend la valeur n", f: e => ({ ...e, i: e.n, q: 0 }) },
-      { key: "imoins7", texte: "i prend la valeur i\u00a0−\u00a07", f: e => e.i == null ? null : ({ ...e, i: e.i - 7, q: (e.q || 0) + 1 }) }
+      { key: "in", texte: "r prend la valeur n", f: e => ({ ...e, r: e.n, q: 0 }) },
+      { key: "imoins7", texte: "r prend la valeur r\u00a0−\u00a07", f: e => e.r == null ? null : ({ ...e, r: e.r - 7, q: (e.q || 0) + 1 }) }
     ],
     sorties: [
       { key: "oui", texte: "n est un multiple de 7" },
@@ -286,7 +286,7 @@ const ACTIVITES = [
     ],
     attendu: n => (n % 7 === 0 ? "oui" : "non"),
     // affiché quand la machine a donné la bonne réponse : n = 7 × q + r
-    bilan: (n, e) => e.i == null || e.q == null ? "" : `Division euclidienne : ${n} = 7 × ${e.q} + ${e.i}.`,
+    bilan: (n, e) => e.r == null || e.q == null ? "" : `Division euclidienne : ${n} = 7 × ${e.q} + ${e.r}.`,
     nombres: [21, 30, 49, 15, 63, 50, 6, 84]
   }
 ];
