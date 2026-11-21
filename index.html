@@ -98,7 +98,10 @@ svg#links path.hit:hover + path.vis{stroke:var(--ko)}
 .block.lit .face{background:var(--lit);color:#111;box-shadow:0 0 22px 6px rgba(255,255,255,.55)}
 .block.cond.lit .bord{background:#fff}
 .block.cond.lit{filter:drop-shadow(0 0 14px rgba(255,255,255,.8))}
-.block.start.lit .face{border-color:#fff}
+.block.start.lit .face{border-color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.35),0 0 24px 8px rgba(255,255,255,.55)}
+/* un bloc allumé passe au premier plan : son halo n'est coupé par aucun bloc voisin */
+.block.lit,.block.out.ok,.block.out.ko,.block.out.etape,.block.out.revele{z-index:5}
+.block.start.lit{z-index:6}
 .block.out.ok .face{background:var(--ok);border-color:#a8ffcb;color:#06240f;box-shadow:0 0 26px 8px rgba(46,204,113,.6)}
 .block.out.etape .face{background:var(--warn);border-color:#ffd9a8;color:#2a1500;box-shadow:0 0 26px 8px rgba(255,159,67,.6)}
 .block.out.ko .face{background:var(--ko);border-color:#ffc2c2;color:#2a0505;box-shadow:0 0 26px 8px rgba(255,77,77,.6)}
