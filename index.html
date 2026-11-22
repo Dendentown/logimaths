@@ -323,9 +323,9 @@ const egalite = (h, a, b) => Math.abs(h*h - a*a - b*b) < 1e-9;
 const membreG = x => 3 * x - 5, membreD = x => 2 * x + 1;
 // un nombre négatif est écrit entre parenthèses dans un produit : 3 × (−3)
 const par = x => x < 0 ? `(${fr(x).replace("-", "−")})` : fr(x);
-// égalité de Pythagore avec les valeurs : h² = a² + b²  →  « 25 = 9 + 16 »
+// égalité de Pythagore avec les valeurs : h² = a² + b²  →  « 25 = 25 » (résultat final de la somme)
 // (avec « ≠ » quand l'égalité est fausse)
-const egaliteValeurs = (h, a, b) => `${fr(r2(h * h))} ${egalite(h, a, b) ? "=" : "≠"} ${fr(r2(a * a))} + ${fr(r2(b * b))}`;
+const egaliteValeurs = (h, a, b) => `${fr(r2(h * h))} ${egalite(h, a, b) ? "=" : "≠"} ${fr(r2(a * a + b * b))}`;
 // somme des chiffres d'un nombre entier
 function sommeChiffres(x){ return String(Math.abs(x)).split("").reduce((s, c) => s + Number(c), 0); }
 // outils pour l'activité 5 (triangle [AB, AC, BC])
