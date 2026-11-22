@@ -53,6 +53,7 @@ main{flex:1;display:flex;min-height:0}
 .block.cond .face{flex-direction:column}
 .valcond{margin-top:5px;font-size:14px;font-weight:800;white-space:nowrap}
 .var.flash{animation:flashLigne .9s ease-out}
+.unite.clignote{display:inline-block;animation:clignoteAngle .9s ease-in-out;text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:3px}
 svg .angledroit.clignote{animation:clignoteAngle .9s ease-in-out;stroke-width:3.5}
 @keyframes clignoteAngle{0%,50%,100%{opacity:1}25%,75%{opacity:.05}}
 .valcond.flash{animation:flashLigne .9s ease-out}
@@ -344,7 +345,7 @@ const ACTIVITES = [
     titre: "Activité 0 — Multiple de 10",
     consigne: "Fais un logigramme qui permet de vérifier si un nombre <b>n</b> est un multiple de 10.",
     conditions: [
-      { key: "u0", texte: "Le chiffre des unités de n est 0", test: n => n % 10 === 0 }
+      { key: "u0", texte: "Le chiffre des unités de n est 0", test: n => n % 10 === 0, unite: true }
     ],
     sorties: [
       { key: "oui", texte: "n est un multiple de 10" },
@@ -358,8 +359,8 @@ const ACTIVITES = [
     titre: "Activité 1 — Multiple de 5",
     consigne: "Fais un logigramme qui permet de vérifier si un nombre <b>n</b> est un multiple de 5.",
     conditions: [
-      { key: "u0", texte: "Le chiffre des unités de n est 0", test: n => n % 10 === 0 },
-      { key: "u5", texte: "Le chiffre des unités de n est 5", test: n => n % 10 === 5 }
+      { key: "u0", texte: "Le chiffre des unités de n est 0", test: n => n % 10 === 0, unite: true },
+      { key: "u5", texte: "Le chiffre des unités de n est 5", test: n => n % 10 === 5, unite: true }
     ],
     sorties: [
       { key: "oui", texte: "n est un multiple de 5" },
@@ -813,7 +814,7 @@ function etatInitial(){
 }
 function sauver(){
   // on n'enregistre pas les lumières du dernier test
-  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "valLigne", "valFlash", "bulleFlash", "varFlash", "figFlash", "bulle", "bulleNew"];
+  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "valLigne", "valFlash", "bulleFlash", "varFlash", "figFlash", "uniteFlash", "bulle", "bulleNew"];
   try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId }, (k, v) => tmp.includes(k) ? undefined : v)); } catch(e){}
 }
 function charger(){
@@ -1388,6 +1389,10 @@ function majEtats(){
     el.classList.toggle("stuck", !!b.stuck);
     if (b.type === "start" || b.type === "out" || b.type === "act" || b.type === "cond") el.querySelector(".face").innerHTML = texteBloc(b);
     if (b.type === "start" && b.figFlash) el.querySelectorAll(".angledroit").forEach(x => x.classList.add("clignote"));
+    if (b.type === "start" && b.uniteFlash){
+      const sl = el.querySelector(".slot"), txt = sl ? sl.textContent : "";
+      if (txt) sl.innerHTML = txt.slice(0, -1) + `<span class="unite clignote">${txt.slice(-1)}</span>`;
+    }
     if (b.type === "out") el.classList.toggle("calcul", !!b.extra);
     // un bloc qui affiche ses calculs passe devant tous les autres blocs
     el.classList.toggle("abulle", !!b.bulle);
@@ -1396,7 +1401,7 @@ function majEtats(){
   dessinerLiens();
 }
 function reinitLumieres(){
-  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; delete b.valLigne; delete b.valFlash; delete b.bulleFlash; delete b.varFlash; delete b.figFlash; });
+  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; delete b.valLigne; delete b.valFlash; delete b.bulleFlash; delete b.varFlash; delete b.figFlash; delete b.uniteFlash; });
   links.forEach(l => delete l.lit);
 }
 
@@ -1480,11 +1485,12 @@ async function executer(i, vitesse, token){
     cur = blocks.find(b => b.id === l.to);
     if (cur.type === "cond"){
       const c0 = act.conditions.find(c => c.key === cur.key);
-      if (c0 && c0.figure){
-        // condition « triangle rectangle » : l'angle droit de la figure du Début clignote (s'il y en a un)
-        start.figFlash = true; majEtats();
+      if (c0 && (c0.figure || c0.unite)){
+        // « triangle rectangle » : l'angle droit de la figure du Début clignote (s'il y en a un)
+        // « chiffre des unités » : le chiffre des unités du nombre dans le Début clignote
+        start[c0.figure ? "figFlash" : "uniteFlash"] = true; majEtats();
         await attendre(Math.max(900, vitesse * 1.6)); if (token !== runToken) return null;
-        delete start.figFlash; majEtats();
+        delete start.figFlash; delete start.uniteFlash; majEtats();
       }
     }
     if (cur.type === "cond"){
