@@ -54,6 +54,7 @@ main{flex:1;display:flex;min-height:0}
 .valcond{margin-top:5px;font-size:14px;font-weight:800;white-space:nowrap}
 .var.flash{animation:flashLigne .9s ease-out}
 .unite.clignote{display:inline-block;animation:clignoteAngle .9s ease-in-out;text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:3px}
+svg .cote.clignote{animation:clignoteAngle .9s ease-in-out;stroke-width:5}
 svg .angledroit.clignote{animation:clignoteAngle .9s ease-in-out;stroke-width:3.5}
 @keyframes clignoteAngle{0%,50%,100%{opacity:1}25%,75%{opacity:.05}}
 .valcond.flash{animation:flashLigne .9s ease-out}
@@ -440,9 +441,9 @@ const ACTIVITES = [
     etatInitial: t => ({ t, calc: [] }),
     suiviTests: true,   // la machine retient quelles conditions ont été testées, et avec quels calculs déjà faits
     conditions: [
-      { key: "gAB", texte: "AB est le plus grand côté", test: e => plusGrand(e.t) === "AB" },
-      { key: "gAC", texte: "AC est le plus grand côté", test: e => plusGrand(e.t) === "AC" },
-      { key: "gBC", texte: "BC est le plus grand côté", test: e => plusGrand(e.t) === "BC" },
+      { key: "gAB", texte: "AB est le plus grand côté", test: e => plusGrand(e.t) === "AB", cote: "AB" },
+      { key: "gAC", texte: "AC est le plus grand côté", test: e => plusGrand(e.t) === "AC", cote: "AC" },
+      { key: "gBC", texte: "BC est le plus grand côté", test: e => plusGrand(e.t) === "BC", cote: "BC" },
       // « lie » : blocs de calcul qui clignotent quand on teste cette égalité
       { key: "egalA", texte: "BC² = AB² + AC²", test: e => egalite(e.t[2], e.t[0], e.t[1]), lie: ["cBC", "sABAC"], valeurs: e => egaliteValeurs(e.t[2], e.t[0], e.t[1]) },
       { key: "egalB", texte: "AC² = AB² + BC²", test: e => egalite(e.t[1], e.t[0], e.t[2]), lie: ["cAC", "sABBC"], valeurs: e => egaliteValeurs(e.t[1], e.t[0], e.t[2]) },
@@ -521,9 +522,9 @@ const ACTIVITES = [
     etatInitial: t => ({ t }),
     conditions: [
       { key: "rect", texte: "Le triangle est rectangle", test: e => e.t.hyp != null, figure: true },
-      { key: "ahyp", texte: "a est l'hypoténuse", test: e => e.t.hyp === "a" },
-      { key: "chyp", texte: "c est l'hypoténuse", test: e => e.t.hyp === "c" },
-      { key: "bhyp", texte: "b est l'hypoténuse", test: e => e.t.hyp === "b" }
+      { key: "ahyp", texte: "a est l'hypoténuse", test: e => e.t.hyp === "a", cote: "BC" },
+      { key: "chyp", texte: "c est l'hypoténuse", test: e => e.t.hyp === "c", cote: "AB" },
+      { key: "bhyp", texte: "b est l'hypoténuse", test: e => e.t.hyp === "b", cote: "AC" }
     ],
     // les actions écrivent les étapes du calcul ; la machine vérifie qu'elles sont faites dans le bon ordre
     actions: [
@@ -723,7 +724,9 @@ function dessinTriangle(P, opts){
   const f = v => v.toFixed(1);
   let svg = `<svg class="fig" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
   if (opts.numero) svg += `<text x="4" y="12" font-size="11" font-weight="700" fill="currentColor" opacity=".75">n°${opts.numero}</text>`;
-  svg += `<polygon points="${["A","B","C"].map(k => f(S[k][0]) + "," + f(S[k][1])).join(" ")}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>`;
+  // le triangle est tracé côté par côté, pour pouvoir faire clignoter un côté (classe cote-AB, cote-AC, cote-BC)
+  for (const [k1, k2] of [["A","B"], ["A","C"], ["B","C"]])
+    svg += `<line class="cote cote-${k1}${k2}" x1="${f(S[k1][0])}" y1="${f(S[k1][1])}" x2="${f(S[k2][0])}" y2="${f(S[k2][1])}" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`;
   // angle droit
   if (opts.droit){
     const V = S[opts.droit], [k1, k2] = "ABC".replace(opts.droit, "").split("");
@@ -814,7 +817,7 @@ function etatInitial(){
 }
 function sauver(){
   // on n'enregistre pas les lumières du dernier test
-  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "valLigne", "valFlash", "bulleFlash", "varFlash", "figFlash", "uniteFlash", "bulle", "bulleNew"];
+  const tmp = ["lit", "res", "stuck", "portLit", "val", "cur", "extra", "extraNew", "revele", "valLigne", "valFlash", "bulleFlash", "varFlash", "figFlash", "uniteFlash", "coteFlash", "bulle", "bulleNew"];
   try { localStorage.setItem("logimaths-" + act.id, JSON.stringify({ blocks, links, nextId }, (k, v) => tmp.includes(k) ? undefined : v)); } catch(e){}
 }
 function charger(){
@@ -1389,6 +1392,7 @@ function majEtats(){
     el.classList.toggle("stuck", !!b.stuck);
     if (b.type === "start" || b.type === "out" || b.type === "act" || b.type === "cond") el.querySelector(".face").innerHTML = texteBloc(b);
     if (b.type === "start" && b.figFlash) el.querySelectorAll(".angledroit").forEach(x => x.classList.add("clignote"));
+    if (b.type === "start" && b.coteFlash) el.querySelectorAll(".cote-" + b.coteFlash).forEach(x => x.classList.add("clignote"));
     if (b.type === "start" && b.uniteFlash){
       const sl = el.querySelector(".slot"), txt = sl ? sl.textContent : "";
       if (txt) sl.innerHTML = txt.slice(0, -1) + `<span class="unite clignote">${txt.slice(-1)}</span>`;
@@ -1401,7 +1405,7 @@ function majEtats(){
   dessinerLiens();
 }
 function reinitLumieres(){
-  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; delete b.valLigne; delete b.valFlash; delete b.bulleFlash; delete b.varFlash; delete b.figFlash; delete b.uniteFlash; });
+  blocks.forEach(b => { delete b.lit; delete b.res; delete b.stuck; delete b.portLit; delete b.cur; delete b.extra; delete b.extraNew; delete b.revele; delete b.bulle; delete b.bulleNew; delete b.valLigne; delete b.valFlash; delete b.bulleFlash; delete b.varFlash; delete b.figFlash; delete b.uniteFlash; delete b.coteFlash; });
   links.forEach(l => delete l.lit);
 }
 
@@ -1485,6 +1489,12 @@ async function executer(i, vitesse, token){
     cur = blocks.find(b => b.id === l.to);
     if (cur.type === "cond"){
       const c0 = act.conditions.find(c => c.key === cur.key);
+      if (c0 && c0.cote){
+        // « plus grand côté » / « hypoténuse » : le côté concerné clignote sur la figure du Début
+        start.coteFlash = c0.cote; majEtats();
+        await attendre(Math.max(900, vitesse * 1.6)); if (token !== runToken) return null;
+        delete start.coteFlash; majEtats();
+      }
       if (c0 && (c0.figure || c0.unite)){
         // « triangle rectangle » : l'angle droit de la figure du Début clignote (s'il y en a un)
         // « chiffre des unités » : le chiffre des unités du nombre dans le Début clignote
